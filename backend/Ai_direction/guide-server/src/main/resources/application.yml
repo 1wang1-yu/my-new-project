@@ -1,0 +1,49 @@
+server:
+  port: ${server.port}
+
+spring:
+  application:
+    name: guide-server
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    url: ${db.url}
+    username: ${db.username}
+    password: ${db.password}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+  ai:
+    openai:
+      api-key: ${spring.ai.openai.api-key}
+      base-url: ${spring.ai.openai.base-url}
+      chat:
+        options:
+          model: ${spring.ai.openai.chat.options.model}
+          temperature: 0.7
+
+guide:
+  whisper:
+    base-url: ${guide.chroma.base-url}
+    api-key: ${guide.chroma.api-key}
+    transcribe-path: ${guide.whisper.transcribe-path}
+    model: ${guide.whisper.model}
+  chroma:
+    base-url: ${guide.chroma.base-url}
+    default-collection: ${guide.chroma.default-collection}
+  tts:
+    base-url: ${guide.tts.base-url}
+    api-key: ${guide.tts.api-key}
+
+logging:
+  level:
+    com.guide: INFO

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧导览管理平台</title>
+  <link rel="stylesheet" href="/admin-console/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar panel">
+      <div class="brand">
+        <div class="brand-icon">导</div>
+        <div>
+          <div class="brand-title">智慧导览管理平台</div>
+          <div class="brand-sub">知识库管理 · 数字人配置 · 数据大屏 · 系统设置</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="#knowledge">知识库管理</a>
+        <a href="#avatar">数字人配置</a>
+        <a href="#dashboard" class="active">数据大屏</a>
+        <a href="#system">系统设置</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="dashboard" class="stats-grid">
+        <article class="panel stat-card">
+          <span>今日服务人次</span>
+          <strong id="serviceCount">--</strong>
+          <small class="positive">↑ 12% 较昨日</small>
+        </article>
+        <article class="panel stat-card">
+          <span>平均满意度</span>
+          <strong><span id="satisfaction">--</span><em>/5</em></strong>
+          <small class="positive">↑ 0.2 较上周</small>
+        </article>
+        <article class="panel stat-card">
+          <span>问答准确率</span>
+          <strong><span id="accuracyRate">--</span><em>%</em></strong>
+          <small>达标 &gt; 90%</small>
+        </article>
+        <article class="panel stat-card">
+          <span>平均响应时长</span>
+          <strong><span id="avgResponse">--</span><em>ms</em></strong>
+          <small class="positive">优于目标</small>
+        </article>
+      </section>
+
+      <section class="board-grid">
+        <article class="panel chart-panel">
+          <h3>本周满意度趋势</h3>
+          <div class="bar-chart">
+            <i style="height: 72%"></i><i style="height: 84%"></i><i style="height: 76%"></i><i style="height: 81%"></i><i style="height: 88%"></i><i class="green" style="height: 92%"></i><i class="green" style="height: 90%"></i>
+          </div>
+          <div class="week-labels"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
+        </article>
+
+        <article class="panel chart-panel">
+          <h3>游客情感分布</h3>
+          <div class="progress-item">
+            <div><span>正面情绪</span><span id="positiveRate">--%</span></div>
+            <div class="progress"><b id="positiveBar" class="positive-bar" style="width:0%"></b></div>
+          </div>
+          <div class="progress-item">
+            <div><span>中性</span><span id="neutralRate">--%</span></div>
+            <div class="progress"><b id="neutralBar" class="neutral-bar" style="width:0%"></b></div>
+          </div>
+          <div class="progress-item">
+            <div><span>负面情绪</span><span id="negativeRate">--%</span></div>
+            <div class="progress"><b id="negativeBar" class="negative-bar" style="width:0%"></b></div>
+          </div>
+        </article>
+
+        <article class="panel list-panel">
+          <h3>今日热门问题 Top 5</h3>
+          <ol id="topQuestions" class="top-list"></ol>
+        </article>
+
+        <article id="knowledge" class="panel list-panel">
+          <h3>知识库状态</h3>
+          <div class="knowledge-row"><span>景区历史文史资料</span><b>已索引 234篇</b></div>
+          <div class="knowledge-row"><span>常见问答对</span><b>已索引 89组</b></div>
+          <div class="knowledge-row"><span>景点讲解词</span><b>已索引 56个</b></div>
+          <div class="update-box">上次更新：2天前 · 建议检查新增景点资料</div>
+        </article>
+      </section>
+
+      <section class="bottom-grid">
+        <article class="panel" id="system">
+          <h3>API Key / 系统配置</h3>
+          <p>当前已接入国内兼容模式模型，可直接用于聊天能力。</p>
+          <div class="config-item"><span>提供商</span><strong id="provider">--</strong></div>
+          <div class="config-item"><span>模型 ID</span><strong id="modelId">--</strong></div>
+          <div class="config-item"><span>基础地址</span><strong id="baseUrl">--</strong></div>
+          <div class="config-item"><span>API Key</span><strong id="maskedKey">--</strong></div>
+        </article>
+
+        <article class="panel">
+          <h3>游客感受度报告</h3>
+          <div class="form-row">
+            <input id="startDate" value="2026-04-01" />
+            <input id="endDate" value="2026-04-15" />
+            <button id="refreshSentiment">刷新报告</button>
+          </div>
+          <div id="sentimentBox" class="report-box"></div>
+        </article>
+
+        <article class="panel" id="avatar">
+          <h3>知识库上传</h3>
+          <div class="form-column">
+            <input id="uploadTitle" value="景区常见问题文档" />
+            <input id="uploadCategory" value="faq" />
+            <input id="knowledgeFile" type="file" />
+            <button id="uploadBtn">上传并入库</button>
+          </div>
+          <div id="uploadResult" class="report-box"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <script src="/admin-console/app.js"></script>
+</body>
+</html>

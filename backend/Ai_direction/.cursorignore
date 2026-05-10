@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.git/
+.next/
+out/
+coverage/
+*.log
+*.lock

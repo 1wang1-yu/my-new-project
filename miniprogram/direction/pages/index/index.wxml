@@ -1,0 +1,70 @@
+<view class="page-shell">
+  <view class="top-panel">
+    <view class="status-bar">
+      <text>9:41</text>
+      <text>● ● ●</text>
+    </view>
+    <view class="avatar-ring">
+      <view class="avatar-core">
+        <text class="avatar-icon">人</text>
+      </view>
+      <view class="avatar-dot"></view>
+    </view>
+    <view class="avatar-name">{{avatarName}}</view>
+    <view class="avatar-subtitle">{{subtitle}}</view>
+    <view class="wave-bars">
+      <text></text><text></text><text></text><text></text><text></text>
+    </view>
+  </view>
+
+  <view class="chat-panel">
+    <scroll-view class="chat-scroll" scroll-y="true">
+      <block wx:for="{{messages}}" wx:key="index">
+        <view class="msg-row {{item.role === 'user' ? 'msg-row-user' : ''}}">
+          <view wx:if="{{item.role === 'assistant'}}" class="msg-badge">导</view>
+          <view class="msg-bubble {{item.role === 'user' ? 'msg-user' : 'msg-assistant'}}">{{item.content}}</view>
+        </view>
+      </block>
+    </scroll-view>
+
+    <view class="quick-block">
+      <view class="quick-title">猜你想问</view>
+      <view class="chips">
+        <text wx:for="{{suggestedQuestions}}" wx:key="*this" class="chip" data-question="{{item}}" bindtap="useSuggestedQuestion">{{item}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{errorText}}" class="error-box">{{errorText}}</view>
+
+    <view class="composer-row">
+      <input class="composer-input" placeholder="输入问题..." value="{{message}}" data-field="message" bindinput="onFieldChange" />
+      <button class="mic-btn" bindtap="chooseAndUploadAudio">◉</button>
+    </view>
+
+    <view class="tool-row">
+      <button class="tool-btn primary" bindtap="sendChat" loading="{{loading}}">开始讲解</button>
+      <button class="tool-btn" bindtap="getTts">语音播报</button>
+      <button class="tool-btn ghost" bindtap="openDashboard">管理端</button>
+    </view>
+  </view>
+
+  <view class="route-panel card">
+    <view class="route-title">为你定制的路线</view>
+    <view class="route-subtitle">基于你对{{interestsText}}的兴趣</view>
+
+    <block wx:for="{{routeResult}}" wx:key="name">
+      <view class="route-card {{index === 0 ? 'route-blue' : 'route-green'}}">
+        <view class="route-name">{{item.name}} · {{item.estimated_time}}分钟</view>
+        <view wx:for="{{item.stops}}" wx:key="*this" class="route-stop">{{item}}</view>
+      </view>
+    </block>
+
+    <view class="interest-title">调整你的兴趣偏好</view>
+    <view class="chips dark">
+      <text wx:for="{{interestTags}}" wx:key="*this" class="chip dark-chip">{{item}}</text>
+    </view>
+    <button class="route-action" bindtap="getRoute">开始导览</button>
+  </view>
+
+  <view wx:if="{{ttsResult}}" class="audio-status">音频地址：{{ttsResult.audio_url}}</view>
+</view>

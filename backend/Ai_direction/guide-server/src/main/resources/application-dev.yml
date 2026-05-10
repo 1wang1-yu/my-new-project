@@ -1,0 +1,36 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=smart_guide_db;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: 123456
+  ai:
+    openai:
+      api-key: sk-e6fca972c66f43e1ac827b9553bf1842
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      chat:
+        options:
+          model: qwen3.5-flash
+
+guide:
+  whisper:
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api-key: sk-e6fca972c66f43e1ac827b9553bf1842
+    transcribe-path: /audio/transcriptions
+    model: whisper-1
+  chroma:
+    base-url: http://localhost:8000
+    default-collection: travel_kb
+  tts:
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api-key: sk-e6fca972c66f43e1ac827b9553bf1842
+db:
+  url: jdbc:sqlserver://localhost:1433;databaseName=smart_guide_db;encrypt=false;trustServerCertificate=true
+  port: 1433
+  host: localhost
+  username: sa
+  name: smart_guide_db
+  password: 123456
+  driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
