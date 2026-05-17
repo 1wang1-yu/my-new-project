@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = 'http://localhost:8081'
+const DEFAULT_BASE_URL = 'http://10.131.244.107:8081'
 
 function normalizeError(message) {
   if (!message) {

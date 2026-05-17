@@ -38,12 +38,12 @@
 
     <view class="composer-row">
       <input class="composer-input" placeholder="输入问题..." value="{{message}}" data-field="message" bindinput="onFieldChange" />
-      <button class="mic-btn" bindtap="chooseAndUploadAudio">◉</button>
+      <button class="mic-btn {{isRecording ? 'recording' : ''}}" bindtouchstart="startRecording" bindtouchend="stopRecording">{{isRecording ? '●' : '◉'}}</button>
     </view>
 
     <view class="tool-row">
       <button class="tool-btn primary" bindtap="sendChat" loading="{{loading}}">开始讲解</button>
-      <button class="tool-btn" bindtap="getTts">语音播报</button>
+      <button class="tool-btn {{isPlaying ? 'active' : ''}}" bindtap="{{isPlaying ? 'stopTts' : 'getTts'}}">{{isPlaying ? '停止播报' : '语音播报'}}</button>
       <button class="tool-btn ghost" bindtap="openDashboard">管理端</button>
     </view>
   </view>

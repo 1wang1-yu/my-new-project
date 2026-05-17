@@ -5,30 +5,30 @@ function createSessionId() {
   return `session_${Date.now()}`
 }
 
+// 创建音频上下文（全局只创建一次）
+const innerAudioContext = wx.createInnerAudioContext()
+
 Page({
   data: {
     baseUrl: '',
     sessionId: createSessionId(),
     userId: 10001,
-    scenicName: '西湖景区',
-    avatarName: '小导·西湖景区数字导游',
-    subtitle: '正在为您讲解断桥残雪…',
-    message: '断桥残雪是什么景观？每个季节各有什么特色？',
+    scenicName: '灵山胜境',
+    avatarName: '小导·景区数字导游',
+    subtitle: '您好，请问有什么可以帮您？',
+    message: '',
     interestsText: '历史文化,自然风光,摄影打卡',
     interestTags: ['历史文化', '自然风光', '摄影打卡'],
     durationMinutes: 180,
-    messages: [
-      {
-        role: 'assistant',
-        content: '断桥残雪是西湖十景之一，冬日初晴时桥面若隐若现，特别适合拍照与故事讲解。',
-      },
-    ],
-    suggestedQuestions: ['推荐路线', '历史故事', '美食推荐'],
+    messages: [],
+    suggestedQuestions: ['有什么好玩的景点？', '推荐一条游览路线', '附近有什么美食'],
     routeResult: [],
     loading: false,
     errorText: '',
     asrText: '',
     ttsResult: null,
+    isRecording: false,
+    isPlaying: false,
   },
 
   onLoad() {
@@ -36,12 +36,20 @@ Page({
     const baseUrl = util.loadBaseUrl((app && app.globalData && app.globalData.baseUrl) || 'http://127.0.0.1:8081')
     this.setData({
       baseUrl,
-      scenicName: app.globalData.scenicName,
-      avatarName: app.globalData.avatarName,
+      scenicName: app.globalData.scenicName || '灵山胜境',
+      avatarName: app.globalData.avatarName || '小导·景区数字导游',
       interestTags: util.splitInterests(this.data.interestsText),
     })
     this.syncBaseUrl(baseUrl)
     this.getRoute()
+  },
+
+  onUnload() {
+    // 页面卸载时停止录音和播放
+    if (this.recorderManager) {
+      this.recorderManager.stop()
+    }
+    innerAudioContext.stop()
   },
 
   syncBaseUrl(baseUrl) {
@@ -63,10 +71,13 @@ Page({
     this.setData(payload)
   },
 
+  onMessageInput(e) {
+    this.setData({ message: e.detail.value })
+  },
+
   useSuggestedQuestion(e) {
-    this.setData({
-      message: e.currentTarget.dataset.question,
-    })
+    const question = e.currentTarget.dataset.question
+    this.setData({ message: question })
     this.sendChat()
   },
 
@@ -79,139 +90,216 @@ Page({
     }
   },
 
+  // ========== 发送文字消息 ==========
   async sendChat() {
+    const msg = this.data.message.trim()
+    if (!msg) return
+
     this.syncBaseUrl()
     this.setLoading(true)
-    this.setData({ errorText: '' })
+    this.setData({ errorText: '', message: '' })
 
     const nextMessages = this.data.messages.concat({
       role: 'user',
-      content: this.data.message,
+      content: msg,
     })
     this.setData({ messages: nextMessages })
 
     try {
-      // 直接使用本地模拟智能回答，避免后端调用超时
-      const data = await api.directChat(this.data.message)
+      const data = await api.chat({
+        user_id: this.data.userId,
+        session_id: this.data.sessionId,
+        message: msg,
+        input_type: 'text'
+      })
+
       this.setData({
         sessionId: data.session_id || this.data.sessionId,
-        subtitle: '已完成本轮智能讲解',
+        subtitle: '讲解完成',
         messages: nextMessages.concat({
           role: 'assistant',
           content: data.answer,
         }),
         suggestedQuestions: data.suggested_questions || this.data.suggestedQuestions,
-        ttsResult: {
-          audio_url: data.tts_url,
-          emotion: data.emotion,
-        },
       })
     } catch (err) {
+      console.error('chat error:', err)
       this.setData({ errorText: err.message || '智能问答调用失败' })
     } finally {
       this.setLoading(false)
     }
   },
 
-  async getRoute() {
-    this.syncBaseUrl()
-    try {
-      // 直接使用本地模拟路线推荐，避免后端调用超时
-      const interests = util.splitInterests(this.data.interestsText)
-      const mockRoutes = [
-        {
-          name: '经典西湖游览路线',
-          stops: ['断桥残雪', '白堤', '孤山', '三潭印月', '雷峰塔', '苏堤'],
-          estimated_time: 240,
-          highlights: ['断桥残雪', '三潭印月', '雷峰塔']
-        },
-        {
-          name: '历史文化之旅',
-          stops: ['岳王庙', '灵隐寺', '飞来峰', '龙井村', '九溪烟树'],
-          estimated_time: 300,
-          highlights: ['灵隐寺', '飞来峰', '龙井村']
-        }
-      ]
-      this.setData({
-        routeResult: mockRoutes,
-        interestTags: interests,
+  // ========== 语音录制（ASR） ==========
+  startRecording() {
+    this.setData({ isRecording: true, errorText: '' })
+
+    // 初始化录音管理器
+    if (!this.recorderManager) {
+      this.recorderManager = wx.getRecorderManager()
+
+      this.recorderManager.onStop((res) => {
+        this.setData({ isRecording: false })
+        // 录音完成后，转为 Base64 发送给后端 ASR
+        this.sendAudioToAsr(res.tempFilePath)
       })
-    } catch (err) {
-      this.setData({ errorText: err.message || '路线推荐调用失败' })
+
+      this.recorderManager.onError((err) => {
+        console.error('录音失败:', err)
+        this.setData({ isRecording: false, errorText: '录音失败: ' + (err.errMsg || '未知错误') })
+      })
+    }
+
+    this.recorderManager.start({
+      format: 'mp3',
+      duration: 30000, // 最长30秒
+    })
+  },
+
+  stopRecording() {
+    if (this.recorderManager && this.data.isRecording) {
+      this.recorderManager.stop()
     }
   },
 
-  chooseAndUploadAudio() {
-    wx.chooseMessageFile({
-      count: 1,
-      type: 'file',
-      extension: ['mp3', 'wav'],
-      success: ({ tempFiles }) => {
-        const target = tempFiles && tempFiles[0]
-        if (!target) {
-          return
-        }
-        this.readAudioAsBase64(target.path)
-      },
-      fail: () => {
-        this.setData({ errorText: '未选择音频文件' })
-      },
-    })
+  toggleRecording() {
+    if (this.data.isRecording) {
+      this.stopRecording()
+    } else {
+      this.startRecording()
+    }
   },
 
-  readAudioAsBase64(filePath) {
-    this.syncBaseUrl()
+  async sendAudioToAsr(tempFilePath) {
     this.setLoading(true)
-    this.setData({ errorText: '' })
+    try {
+      // 读取音频文件并转为 Base64
+      const fileData = await new Promise((resolve, reject) => {
+        wx.getFileSystemManager().readFile({
+          filePath: tempFilePath,
+          encoding: 'base64',
+          success: (res) => resolve(res.data),
+          fail: (err) => reject(err),
+        })
+      })
 
-    wx.getFileSystemManager().readFile({
-      filePath,
-      encoding: 'base64',
-      success: async (res) => {
-        try {
-          const format = filePath.toLowerCase().endsWith('.mp3') ? 'mp3' : 'wav'
-          const data = await api.asr({
-            audio_base64: res.data,
-            format,
-          })
-          this.setData({
-            asrText: data.text || '',
-            message: data.text || this.data.message,
-          })
-          if (data.text) {
-            await this.sendChat()
-          }
-        } catch (err) {
-          this.setData({ errorText: err.message || 'ASR 调用失败' })
-        } finally {
-          this.setLoading(false)
-        }
-      },
-      fail: () => {
-        this.setLoading(false)
-        this.setData({ errorText: '音频读取失败' })
-      },
-    })
+      // 调用后端 ASR 接口
+      const data = await api.asr({
+        audio_base64: fileData,
+        format: 'mp3',
+      })
+
+      const text = data.text || ''
+      this.setData({ asrText: text })
+
+      if (text && text.trim()) {
+        // ASR 成功，自动填入消息并发送
+        this.setData({ message: text.trim() })
+        await this.sendChat()
+      } else {
+        this.setData({ errorText: '未能识别到语音内容，请重试' })
+      }
+    } catch (err) {
+      console.error('ASR error:', err)
+      this.setData({ errorText: '语音识别失败: ' + (err.message || '未知错误') })
+    } finally {
+      this.setLoading(false)
+    }
   },
 
+  // ========== 语音播报（TTS） ==========
   async getTts() {
     this.syncBaseUrl()
     this.setLoading(true)
     this.setData({ errorText: '' })
 
     try {
+      // 获取最后一条 AI 回答
       const latestAssistant = [...this.data.messages].reverse().find(item => item.role === 'assistant')
+      if (!latestAssistant) {
+        this.setData({ errorText: '暂无内容可以播报' })
+        this.setLoading(false)
+        return
+      }
+
       const data = await api.tts({
-        text: latestAssistant ? latestAssistant.content : this.data.message,
-        voice_id: 'guide-female-1',
+        text: latestAssistant.content,
+        voice_id: 'longxiaochun_v3',
         speed: 1,
         emotion: 'calm',
       })
-      this.setData({ ttsResult: data })
+
+      if (data.audio_base64) {
+        // Base64 音频，写入临时文件并播放
+        this.setData({ ttsResult: data, isPlaying: true })
+        const filePath = `${wx.env.USER_DATA_PATH}/tts_${Date.now()}.mp3`
+
+        wx.getFileSystemManager().writeFile({
+          filePath,
+          data: data.audio_base64,
+          encoding: 'base64',
+          success: () => {
+            innerAudioContext.src = filePath
+            innerAudioContext.play()
+            innerAudioContext.onEnded(() => {
+              this.setData({ isPlaying: false })
+            })
+          },
+          fail: (err) => {
+            console.error('音频写入失败:', err)
+            this.setData({ errorText: '音频播放失败', isPlaying: false })
+          },
+        })
+      } else if (data.audio_url) {
+        // 音频 URL，直接播放
+        this.setData({ ttsResult: data, isPlaying: true })
+        innerAudioContext.src = data.audio_url
+        innerAudioContext.play()
+        innerAudioContext.onEnded(() => {
+          this.setData({ isPlaying: false })
+        })
+      } else {
+        this.setData({ errorText: '语音合成未返回音频，请检查 API Key 配置' })
+      }
     } catch (err) {
-      this.setData({ errorText: err.message || 'TTS 调用失败' })
+      console.error('TTS error:', err)
+      this.setData({ errorText: '语音合成失败: ' + (err.message || '未知错误') })
     } finally {
       this.setLoading(false)
+    }
+  },
+
+  stopTts() {
+    innerAudioContext.stop()
+    this.setData({ isPlaying: false })
+  },
+
+  // ========== 路线推荐 ==========
+  async getRoute() {
+    this.syncBaseUrl()
+    try {
+      const interests = util.splitInterests(this.data.interestsText)
+      const data = await api.recommendRoute({
+        user_id: this.data.userId,
+        interests: interests,
+        duration_minutes: this.data.durationMinutes,
+      })
+      this.setData({
+        routeResult: data.routes || [],
+        interestTags: interests,
+      })
+    } catch (err) {
+      console.error('route error:', err)
+      this.setData({
+        routeResult: [
+          {
+            name: '经典游览路线',
+            stops: ['入口广场', '主景点区', '观景平台', '文创商店'],
+            estimated_time: 240,
+            highlights: ['主景点区', '观景平台']
+          }
+        ],
+      })
     }
   },
 
