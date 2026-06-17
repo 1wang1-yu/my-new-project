@@ -1,36 +1,60 @@
 package com.guide.service;
 
+import com.guide.client.EmbeddingClient;
 import com.guide.client.LlmClient;
 import com.guide.entity.ChatMessage;
 import com.guide.entity.Session;
 import com.guide.mapper.ChatMessageMapper;
 import com.guide.mapper.GuideSessionMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
 
-    private static final String SYSTEM = "你是智能旅游导游助手，结合知识库片段回答用户，无法确定时请说明并给出建议。回答尽量口语化、易懂，并在结尾给出 3 个可继续追问的问题。";
+    private static final String SYSTEM = "你是景区导游助手，回答口语化。结尾必须另起一行，严格按格式输出：建议追问：问题A｜问题B｜问题C";
 
     private final LlmClient llmClient;
+    private final EmbeddingClient embeddingClient;
     private final KnowledgeService knowledgeService;
     private final GuideSessionMapper guideSessionMapper;
     private final ChatMessageMapper chatMessageMapper;
-    private final TtsService ttsService;
     private final AnalyticsService analyticsService;
+    private final TransactionTemplate transactionTemplate;
 
     @Transactional
     public ChatReply chat(Long userId, String sessionId, String userMessage, String inputType) {
+        try {
+            return doChat(userId, sessionId, userMessage, inputType);
+        } catch (Exception e) {
+            log.error("ChatService.chat 异常: {}", e.getMessage(), e);
+            return new ChatReply(
+                    sessionId != null ? sessionId : UUID.randomUUID().toString(),
+                    "抱歉，服务暂时不可用，请稍后再试。",
+                    "",
+                    "calm",
+                    List.of("有什么好玩的景点？", "推荐一条游览路线", "附近有什么美食"),
+                    List.of());
+        }
+    }
+
+    /**
+     * 流式问答：SetupResult 在调用线程执行，chunk 通过 consumer 实时回调。
+     * 返回的 Runnable 由调用方在流结束后执行以持久化消息（必须在事务线程内调用）。
+     */
+    public SetupResult prepareStream(Long userId, String sessionId, String userMessage, String inputType) {
         String key = (sessionId == null || sessionId.isBlank()) ? UUID.randomUUID().toString() : sessionId;
         Session session = guideSessionMapper.findBySessionKey(key)
                 .orElseGet(() -> {
@@ -44,51 +68,76 @@ public class ChatService {
                 });
 
         LocalDateTime start = LocalDateTime.now();
-        List<String> ctx = knowledgeService.retrieveContext(userMessage, null, 4);
+        List<Float> embedding = embeddingClient.embed(userMessage);
+        List<List<Float>> queryEmbedding = embedding.isEmpty() ? null : List.of(embedding);
+        List<String> ctx = knowledgeService.retrieveContext(userMessage, queryEmbedding, 2);
         String contextBlock = ctx.isEmpty()
-                ? "（暂无检索到的知识库片段）"
+                ? ""
                 : ctx.stream().map(c -> "- " + c).collect(Collectors.joining("\n"));
 
-        String promptUser = "用户问题：\n" + userMessage + "\n\n知识库参考：\n" + contextBlock
-                + "\n\n请额外输出一行：建议追问：问题1｜问题2｜问题3";
-        String rawAnswer = llmClient.chat(SYSTEM, promptUser);
-        String answer = extractAnswer(rawAnswer);
-        List<String> suggestedQuestions = extractSuggestedQuestions(rawAnswer);
-        if (suggestedQuestions.isEmpty()) {
-            suggestedQuestions = defaultSuggestedQuestions(userMessage);
-        }
+        String promptUser = contextBlock.isEmpty()
+                ? userMessage + "\n\n请另起一行输出：建议追问：问题1｜问题2｜问题3"
+                : "参考：\n" + contextBlock + "\n\n问题：" + userMessage + "\n\n请另起一行输出：建议追问：问题1｜问题2｜问题3";
 
-        Map<String, Object> ttsResult = ttsService.synthesize(answer, "guide-default", 1.0, inferEmotion(answer));
-        String ttsUrl = String.valueOf(ttsResult.getOrDefault("audio_url", ""));
-        String emotion = String.valueOf(ttsResult.getOrDefault("emotion", inferEmotion(answer)));
-        int responseMs = Math.max(120, java.time.Duration.between(start, LocalDateTime.now()).toMillisPart());
+        return new SetupResult(key, session, userMessage, inputType, promptUser, start, ctx);
+    }
 
-        ChatMessage u = new ChatMessage();
-        u.setSessionId(session.getId());
-        u.setUserId(userId);
-        u.setRole("user");
-        u.setInputType(normalizeInputType(inputType));
-        u.setContent(userMessage);
-        u.setCreateTime(start);
-        chatMessageMapper.save(u);
+    public void streamToConsumer(SetupResult setup, Consumer<String> onChunk) {
+        StringBuilder full = new StringBuilder();
+        llmClient.chatStream(SYSTEM, setup.promptUser, chunk -> {
+            full.append(chunk);
+            onChunk.accept(chunk);
+        });
+        setup.fullResponse = full.toString();
+    }
 
-        ChatMessage a = new ChatMessage();
-        a.setSessionId(session.getId());
-        a.setUserId(userId);
-        a.setRole("assistant");
-        a.setInputType("text");
-        a.setContent(answer);
-        a.setTtsUrl(ttsUrl);
-        a.setEmotion(emotion);
-        a.setResponseMs(responseMs);
-        a.setCreateTime(LocalDateTime.now());
-        chatMessageMapper.save(a);
+    public ChatReply finalizeStream(SetupResult setup) {
+        return transactionTemplate.execute(status -> {
+            String rawAnswer = setup.fullResponse != null ? setup.fullResponse : "";
+            String answer = extractAnswer(rawAnswer);
+            List<String> suggestedQuestions = extractSuggestedQuestions(rawAnswer);
+            if (suggestedQuestions.isEmpty()) {
+                suggestedQuestions = defaultSuggestedQuestions(setup.userMessage);
+            }
 
-        session.setMsgCount(session.getMsgCount() + 2);
-        guideSessionMapper.save(session);
+            String emotion = inferEmotion(answer);
+            int responseMs = (int) Math.max(120,
+                    java.time.Duration.between(setup.start, LocalDateTime.now()).toMillis());
 
-        analyticsService.record("chat", "{\"sessionId\":\"" + key + "\",\"inputType\":\"" + normalizeInputType(inputType) + "\"}");
-        return new ChatReply(key, answer, ttsUrl, emotion, suggestedQuestions, ctx);
+            ChatMessage u = new ChatMessage();
+            u.setSessionId(setup.session.getId());
+            u.setUserId(setup.session.getUserId());
+            u.setRole("user");
+            u.setInputType(normalizeInputType(setup.inputType));
+            u.setContent(setup.userMessage);
+            u.setCreateTime(setup.start);
+            chatMessageMapper.save(u);
+
+            ChatMessage a = new ChatMessage();
+            a.setSessionId(setup.session.getId());
+            a.setUserId(setup.session.getUserId());
+            a.setRole("assistant");
+            a.setInputType("text");
+            a.setContent(answer);
+            a.setTtsUrl("");
+            a.setEmotion(emotion);
+            a.setResponseMs(responseMs);
+            a.setCreateTime(LocalDateTime.now());
+            chatMessageMapper.save(a);
+
+            setup.session.setMsgCount(setup.session.getMsgCount() + 2);
+            guideSessionMapper.save(setup.session);
+
+            analyticsService.record("chat",
+                    "{\"sessionId\":\"" + setup.key + "\",\"inputType\":\"" + normalizeInputType(setup.inputType) + "\"}");
+            return new ChatReply(setup.key, answer, "", emotion, suggestedQuestions, setup.ctx);
+        });
+    }
+
+    private ChatReply doChat(Long userId, String sessionId, String userMessage, String inputType) {
+        SetupResult setup = prepareStream(userId, sessionId, userMessage, inputType);
+        streamToConsumer(setup, chunk -> {});
+        return finalizeStream(setup);
     }
 
     private String normalizeInputType(String inputType) {
@@ -136,6 +185,28 @@ public class ChatService {
             return "neutral";
         }
         return "calm";
+    }
+
+    public static class SetupResult {
+        public final String key;
+        public final Session session;
+        public final String userMessage;
+        public final String inputType;
+        public final String promptUser;
+        public final LocalDateTime start;
+        public final List<String> ctx;
+        public String fullResponse;
+
+        SetupResult(String key, Session session, String userMessage, String inputType,
+                    String promptUser, LocalDateTime start, List<String> ctx) {
+            this.key = key;
+            this.session = session;
+            this.userMessage = userMessage;
+            this.inputType = inputType;
+            this.promptUser = promptUser;
+            this.start = start;
+            this.ctx = ctx;
+        }
     }
 
     public record ChatReply(String sessionId, String answer, String ttsUrl, String emotion,

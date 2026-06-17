@@ -18,55 +18,88 @@
   color: #ffffff;
 }
 
-.avatar-ring {
+/* ===== 3D 数字人 Canvas ===== */
+.avatar-stage {
   position: relative;
-  width: 180rpx;
-  height: 180rpx;
-  margin: 44rpx auto 0;
-  border-radius: 50%;
-  border: 8rpx solid rgba(71, 140, 255, 0.45);
-  box-shadow: 0 0 0 12rpx rgba(55, 122, 238, 0.18);
+  width: 280rpx;
+  height: 320rpx;
+  margin: 16rpx auto 0;
 }
 
-.avatar-core {
+.avatar-glow {
   position: absolute;
-  inset: 16rpx;
+  top: 10rpx;
+  right: 0;
+  bottom: 20rpx;
+  left: 0;
   border-radius: 50%;
-  background: linear-gradient(180deg, #5ca6ed, #2c5ead);
+  background: radial-gradient(ellipse at center, rgba(71, 140, 255, 0.2) 0%, transparent 70%);
+}
+
+.avatar-canvas {
+  position: relative;
+  width: 280rpx;
+  height: 320rpx;
+  z-index: 2;
+}
+
+/* 说话指示器 */
+.speaking-indicator {
+  position: absolute;
+  bottom: 8rpx;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 8rpx;
+  z-index: 3;
+  opacity: 0.4;
+  transition: opacity 0.3s;
 }
 
-.avatar-icon {
-  font-size: 64rpx;
+.speaking-indicator.active {
+  opacity: 1;
 }
 
-.avatar-dot {
-  position: absolute;
-  right: -4rpx;
-  bottom: 18rpx;
-  width: 28rpx;
-  height: 28rpx;
+.si-dot {
+  width: 10rpx;
+  height: 10rpx;
   border-radius: 50%;
   background: #57de82;
-  border: 6rpx solid #1c3560;
+}
+
+.speaking-indicator.active .si-dot:nth-child(1) {
+  animation: siBounce 0.6s ease-in-out infinite;
+}
+.speaking-indicator.active .si-dot:nth-child(2) {
+  animation: siBounce 0.6s ease-in-out 0.15s infinite;
+}
+.speaking-indicator.active .si-dot:nth-child(3) {
+  animation: siBounce 0.6s ease-in-out 0.3s infinite;
+}
+.speaking-indicator.active .si-dot:nth-child(4) {
+  animation: siBounce 0.6s ease-in-out 0.45s infinite;
+}
+
+@keyframes siBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12rpx); }
 }
 
 .avatar-name {
-  margin-top: 34rpx;
+  margin-top: 8rpx;
   font-size: 36rpx;
   font-weight: 700;
 }
 
 .avatar-subtitle {
-  margin-top: 12rpx;
+  margin-top: 8rpx;
   color: #7ab4ff;
   font-size: 24rpx;
 }
 
+/* 声波动画 */
 .wave-bars {
-  margin-top: 26rpx;
+  margin-top: 20rpx;
   display: flex;
   justify-content: center;
   gap: 8rpx;
@@ -76,6 +109,7 @@
   width: 8rpx;
   border-radius: 999rpx;
   background: #59a6ff;
+  transition: height 0.3s, margin-top 0.3s;
 }
 
 .wave-bars text:nth-child(1),
@@ -92,6 +126,20 @@
 
 .wave-bars text:nth-child(3) {
   height: 52rpx;
+}
+
+.wave-bars.active text {
+  animation: waveAnim 0.7s ease-in-out infinite;
+}
+.wave-bars.active text:nth-child(1) { animation-delay: 0s; }
+.wave-bars.active text:nth-child(2) { animation-delay: 0.1s; }
+.wave-bars.active text:nth-child(3) { animation-delay: 0.2s; }
+.wave-bars.active text:nth-child(4) { animation-delay: 0.3s; }
+.wave-bars.active text:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes waveAnim {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(2.2); }
 }
 
 .chat-panel {
@@ -219,6 +267,10 @@
   background: #2f5d97;
 }
 
+.tool-btn.active {
+  background: #3d8b40;
+}
+
 .tool-btn.ghost {
   background: rgba(255, 255, 255, 0.08);
 }
@@ -279,13 +331,6 @@
   font-size: 30rpx;
 }
 
-.audio-status {
-  margin-top: 18rpx;
-  font-size: 22rpx;
-  color: #aab8db;
-  word-break: break-all;
-}
-
 .error-box {
   margin-top: 16rpx;
   padding: 16rpx 20rpx;
@@ -294,3 +339,4 @@
   color: #ffd4d4;
   font-size: 22rpx;
 }
+

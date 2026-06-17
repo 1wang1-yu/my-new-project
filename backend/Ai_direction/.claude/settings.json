@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "WebFetch(domain:www.tencentcloud.com)",
+      "WebFetch(domain:cloud.tencent.com.cn)"
+    ]
+  }
+}

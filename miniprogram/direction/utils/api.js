@@ -1,4 +1,4 @@
-const { request, upload } = require('./request')
+const { request, upload, DEFAULT_BASE_URL } = require('./request')
 
 // 调用后端 AI 智能问答接口
 function chat(payload) {
@@ -6,6 +6,18 @@ function chat(payload) {
     url: '/api/v1/chat',
     method: 'POST',
     data: payload,
+  })
+}
+
+// 流式智能问答：当前微信小程序对 SSE 支持不稳定，统一走普通接口
+// 后端已做模型/提示词/上下文优化，响应速度已有明显提升
+function chatStream(payload, onChunk, onDone) {
+  chat(payload).then(function (data) {
+    var meta = { session_id: data.session_id, suggested_questions: data.suggested_questions }
+    if (onChunk) onChunk(data.answer, meta)
+    if (onDone) onDone(null, meta)
+  }).catch(function (err) {
+    if (onDone) onDone(err, null)
   })
 }
 
@@ -68,6 +80,7 @@ function systemConfig() {
 
 module.exports = {
   chat,
+  chatStream,
   recommendRoute,
   asr,
   tts,

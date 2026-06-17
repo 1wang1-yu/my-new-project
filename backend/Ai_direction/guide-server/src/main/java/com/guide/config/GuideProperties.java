@@ -12,6 +12,7 @@ public class GuideProperties {
     private Whisper whisper = new Whisper();
     private Chroma chroma = new Chroma();
     private Tts tts = new Tts();
+    private TencentCloud tencentCloud = new TencentCloud();
 
     @Data
     public static class Whisper {
@@ -31,5 +32,16 @@ public class GuideProperties {
     public static class Tts {
         private String baseUrl = "";
         private String apiKey = "";
+    }
+
+    @Data
+    public static class TencentCloud {
+        private String secretId = "";
+        private String secretKey = "";
+        private String region = "ap-guangzhou";
+        private String ttsEndpoint = "tts.tencentcloudapi.com";
+        private String virtualmanKey = "";
+        private String appKey = "";
+        private String accessToken = "";
     }
 }

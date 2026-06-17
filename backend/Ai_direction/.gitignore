@@ -19,4 +19,6 @@ target/
 # 忽略操作系统文件
 .DS_Store
 Thumbs.db
-sky-server/src/main/resources/application-dev.yml
+guide-server/src/main/resources/application-dev.yml
+node_modules/
+.claude/settings.local.json
