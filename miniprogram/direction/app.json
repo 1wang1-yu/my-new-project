@@ -6,9 +6,9 @@
   ],
   "window": {
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "智慧导览",
-    "navigationBarBackgroundColor": "#1a1d37",
-    "backgroundColor": "#141624",
+    "navigationBarTitleText": "灵山导览",
+    "navigationBarBackgroundColor": "#3D8B7E",
+    "backgroundColor": "#F2F4F3",
     "backgroundTextStyle": "light"
   },
   "style": "v2",

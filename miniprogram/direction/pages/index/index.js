@@ -47,6 +47,7 @@ Page({
     })
     this.syncBaseUrl(baseUrl)
     this.getRoute()
+    this.loadHistory()
 
     var self = this
     innerAudioContext.onEnded(function () {
@@ -286,6 +287,7 @@ Page({
       }
 
       var answerText = msgs[placeholderIdx] ? msgs[placeholderIdx].content : ''
+      self.saveHistory()
       if (answerText) {
         self.setData({ subtitle: '讲解完成' })
         self.speakText(answerText)
@@ -479,5 +481,66 @@ Page({
 
   openDashboard: function () {
     wx.navigateTo({ url: '/pages/dashboard/index' })
+  },
+
+  startNewChat: function () {
+    var messages = this.data.messages
+    if (messages && messages.length > 0) {
+      this.saveHistory(true)
+    }
+    this.setData({
+      messages: [],
+      sessionId: createSessionId(),
+      suggestedQuestions: ['有什么好玩的景点？', '推荐一条游览路线', '附近有什么美食'],
+    })
+    wx.showToast({ title: '新对话已开始', icon: 'success' })
+  },
+
+  // ========== 聊天记录持久化 ==========
+  loadHistory: function () {
+    try {
+      var stored = wx.getStorageSync('guide_chat_history')
+      var history = stored || []
+      if (history.length > 0) {
+        var last = history[history.length - 1]
+        if (last.messages && last.messages.length > 0) {
+          this.setData({ messages: last.messages })
+        }
+      }
+    } catch (e) {
+      console.warn('加载聊天记录失败', e)
+    }
+  },
+
+  saveHistory: function (forceNew) {
+    try {
+      var messages = this.data.messages
+      if (!messages || messages.length === 0) return
+      var stored = wx.getStorageSync('guide_chat_history') || []
+      var now = new Date()
+      var dateStr = now.getFullYear() + '-' +
+        ('0' + (now.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + now.getDate()).slice(-2)
+      var timeStr = ('0' + now.getHours()).slice(-2) + ':' +
+        ('0' + now.getMinutes()).slice(-2)
+      var last = !forceNew && stored[stored.length - 1]
+      if (last && last.date === dateStr) {
+        last.time = timeStr
+        last.timestamp = now.getTime()
+        last.messages = messages.slice()
+      } else {
+        stored.push({
+          id: 'h_' + now.getTime(),
+          date: dateStr,
+          time: timeStr,
+          timestamp: now.getTime(),
+          scenicName: this.data.scenicName,
+          messages: messages.slice()
+        })
+      }
+      wx.setStorageSync('guide_chat_history', stored)
+    } catch (e) {
+      console.warn('保存聊天记录失败', e)
+    }
   },
 })

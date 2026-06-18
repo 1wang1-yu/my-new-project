@@ -1,135 +1,75 @@
-<scroll-view class="admin-page" scroll-y="true">
-  <view class="admin-header card">
-    <view class="brand-box">
-      <view class="brand-icon">导</view>
-      <view>
-        <view class="brand-title">智慧导览管理平台</view>
-        <view class="brand-sub">知识库管理 / 数字人配置 / 数据大屏 / 系统设置</view>
+<view class="profile-page">
+
+  <!-- ========== 用户信息卡片 ========== -->
+  <view class="profile-card card">
+    <view class="profile-avatar">👤</view>
+    <view class="profile-name">{{userName}}</view>
+    <view class="profile-sub">{{scenicName}} · 智能导览用户</view>
+    <view class="profile-stats">
+      <view class="ps-item">
+        <text class="ps-num">{{totalChats}}</text>
+        <text class="ps-label">次对话</text>
       </view>
-    </view>
-    <view class="nav-row">
-      <text class="nav-item">知识库管理</text>
-      <text class="nav-item">数字人配置</text>
-      <text class="nav-item active">数据大屏</text>
-      <text class="nav-item">系统设置</text>
+      <view class="ps-divider"></view>
+      <view class="ps-item">
+        <text class="ps-num">{{totalMessages}}</text>
+        <text class="ps-label">条消息</text>
+      </view>
+      <view class="ps-divider"></view>
+      <view class="ps-item">
+        <text class="ps-num">{{totalDays}}</text>
+        <text class="ps-label">天使用</text>
+      </view>
     </view>
   </view>
 
-  <view class="stats-grid">
-    <view class="stat-card card">
-      <view class="stat-title">今日服务人次</view>
-      <view class="stat-value">{{dashboard.service_count || '--'}}</view>
-      <view class="stat-trend positive">↑ 12% 较昨日</view>
-    </view>
-    <view class="stat-card card">
-      <view class="stat-title">平均满意度</view>
-      <view class="stat-value">{{dashboard.satisfaction || '--'}}<text class="unit">/5</text></view>
-      <view class="stat-trend positive">↑ 0.2 较上周</view>
-    </view>
-    <view class="stat-card card">
-      <view class="stat-title">问答准确率</view>
-      <view class="stat-value">{{dashboard.accuracy_rate || '--'}}<text class="unit">%</text></view>
-      <view class="stat-trend">达标 &gt;90%</view>
-    </view>
-    <view class="stat-card card">
-      <view class="stat-title">平均响应时长</view>
-      <view class="stat-value">{{dashboard.avg_response_ms || '--'}}<text class="unit">ms</text></view>
-      <view class="stat-trend positive">优于目标</view>
-    </view>
-  </view>
-
-  <view class="board-grid">
-    <view class="card panel">
-      <view class="section-title">本周满意度趋势</view>
-      <view class="bar-chart">
-        <view class="bar blue" style="height: 120rpx"></view>
-        <view class="bar blue" style="height: 144rpx"></view>
-        <view class="bar blue" style="height: 130rpx"></view>
-        <view class="bar blue" style="height: 138rpx"></view>
-        <view class="bar blue" style="height: 150rpx"></view>
-        <view class="bar green" style="height: 160rpx"></view>
-        <view class="bar green" style="height: 156rpx"></view>
-      </view>
-      <view class="week-labels">
-        <text>周一</text><text>周二</text><text>周三</text><text>周四</text><text>周五</text><text>周六</text><text>周日</text>
-      </view>
+  <!-- ========== 聊天记录 ========== -->
+  <view class="history-section">
+    <view class="section-header">
+      <text class="section-title">💬 聊天记录</text>
+      <text wx:if="{{chatHistory.length > 0}}" class="section-count">{{chatHistory.length}}</text>
     </view>
 
-    <view class="card panel">
-      <view class="section-title">游客情感分布</view>
-      <block wx:if="{{dashboard.sentiment_distribution}}">
-        <view class="progress-item">
-          <view class="progress-label"><text>正面情绪</text><text>{{dashboard.sentiment_distribution.positive}}%</text></view>
-          <view class="progress-track"><view class="progress-bar positive-bar" style="width: {{dashboard.sentiment_distribution.positive}}%"></view></view>
+    <block wx:if="{{chatHistory.length > 0}}">
+      <view wx:for="{{chatHistory}}" wx:key="id" class="history-card card">
+        <view class="hc-head" bindtap="toggleDetail" data-index="{{index}}">
+          <view class="hc-top">
+            <view class="hc-date">
+              <text class="hc-date-icon">📅</text>
+              <text>{{item.date}}</text>
+            </view>
+            <view class="hc-time">{{item.time}}</view>
+          </view>
+          <view class="hc-preview">{{item.preview}}</view>
+          <view class="hc-bottom">
+            <text class="hc-count">{{item.messageCount}} 条消息</text>
+            <text class="hc-arrow">{{expandedIndex === index ? '收起 ▲' : '查看详情 ›'}}</text>
+          </view>
         </view>
-        <view class="progress-item">
-          <view class="progress-label"><text>中性</text><text>{{dashboard.sentiment_distribution.neutral}}%</text></view>
-          <view class="progress-track"><view class="progress-bar neutral-bar" style="width: {{dashboard.sentiment_distribution.neutral}}%"></view></view>
-        </view>
-        <view class="progress-item">
-          <view class="progress-label"><text>负面情绪</text><text>{{dashboard.sentiment_distribution.negative}}%</text></view>
-          <view class="progress-track"><view class="progress-bar negative-bar" style="width: {{dashboard.sentiment_distribution.negative}}%"></view></view>
-        </view>
-      </block>
-    </view>
 
-    <view class="card panel">
-      <view class="section-title">今日热门问题 Top 5</view>
-      <view wx:for="{{dashboard.top_questions}}" wx:key="*this" class="rank-row">
-        <text class="rank-index">{{index + 1}}</text>
-        <text class="rank-question">{{item}}</text>
-        <text class="rank-count">{{347 - index * 58}}次</text>
+        <!-- 内联展开的对话详情 -->
+        <view wx:if="{{expandedIndex === index}}" class="inline-detail">
+          <block wx:for="{{item.messages}}" wx:key="index">
+            <view class="dmsg {{item.role === 'user' ? 'dmsg-user' : 'dmsg-assistant'}}">
+              <text class="dmsg-role">{{item.role === 'user' ? '👤 你' : '🧑‍🏫 小导'}}</text>
+              <text class="dmsg-content">{{item.content}}</text>
+            </view>
+          </block>
+        </view>
       </view>
-    </view>
-
-    <view class="card panel">
-      <view class="section-title">知识库状态</view>
-      <view class="knowledge-item">景区历史文史资料 <text class="knowledge-ok">已索引 234篇</text></view>
-      <view class="knowledge-item">常见问答对 <text class="knowledge-ok">已索引 89组</text></view>
-      <view class="knowledge-item">景点讲解词 <text class="knowledge-ok">已索引 56个</text></view>
-      <view class="knowledge-update">上次更新：2天前 · 建议检查新增景点资料</view>
-    </view>
-  </view>
-
-  <view class="card panel">
-    <view class="section-title">AI Key / 系统配置</view>
-    <view class="section-desc">当前使用国内兼容模式模型，管理端可查看已接入的大模型配置。</view>
-    <block wx:if="{{systemConfig}}">
-      <view class="config-row"><text>提供商</text><text>{{systemConfig.provider}}</text></view>
-      <view class="config-row"><text>模型 ID</text><text>{{systemConfig.model}}</text></view>
-      <view class="config-row"><text>基础地址</text><text class="config-value">{{systemConfig.base_url}}</text></view>
-      <view class="config-row"><text>API Key</text><text>{{systemConfig.api_key_masked}}</text></view>
     </block>
-  </view>
 
-  <view class="bottom-grid">
-    <view class="card panel">
-      <view class="section-title">游客感受度报告</view>
-      <view class="date-row">
-        <input class="field-input" value="{{startDate}}" data-field="startDate" bindinput="onFieldChange" />
-        <input class="field-input" value="{{endDate}}" data-field="endDate" bindinput="onFieldChange" />
-      </view>
-      <button class="primary-btn" bindtap="fetchSentiment">刷新报告</button>
-      <view wx:if="{{sentiment}}" class="report-box">
-        <view class="report-line">正向比例：{{sentiment.positive_rate}}</view>
-        <view class="report-line">负向关键词：{{sentiment.negative_keywords.join(' / ')}}</view>
-        <view wx:for="{{sentiment.suggestions}}" wx:key="*this" class="report-line">- {{item}}</view>
-      </view>
-    </view>
-
-    <view class="card panel">
-      <view class="section-title">知识库上传</view>
-      <input class="field-input" value="{{uploadTitle}}" data-field="uploadTitle" bindinput="onFieldChange" />
-      <input class="field-input spaced" value="{{uploadCategory}}" data-field="uploadCategory" bindinput="onFieldChange" />
-      <button class="secondary-btn" bindtap="chooseKnowledgeFile">选择文档</button>
-      <view wx:if="{{selectedFileName}}" class="report-line">已选文件：{{selectedFileName}}</view>
-      <button class="primary-btn" bindtap="uploadKnowledge">上传并入库</button>
-      <view wx:if="{{uploadResult}}" class="report-box">
-        <view class="report-line">doc_id：{{uploadResult.doc_id}}</view>
-        <view class="report-line">chunk_count：{{uploadResult.chunk_count}}</view>
-        <view class="report-line">index_status：{{uploadResult.index_status}}</view>
-      </view>
-      <view wx:if="{{errorText}}" class="error-box">{{errorText}}</view>
+    <view wx:else class="empty-state">
+      <view class="empty-icon">💬</view>
+      <view class="empty-text">暂无聊天记录</view>
+      <view class="empty-sub">去首页开始一段导览对话吧</view>
     </view>
   </view>
-</scroll-view>
+
+  <!-- ========== 操作区 ========== -->
+  <view class="action-section">
+    <button class="clear-btn" bindtap="clearHistory">🗑️ 清空聊天记录</button>
+    <view class="action-hint">聊天记录仅保存在本地，清空后无法恢复</view>
+  </view>
+
+</view>

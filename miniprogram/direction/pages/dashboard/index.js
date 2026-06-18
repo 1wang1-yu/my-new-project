@@ -1,119 +1,106 @@
-const api = require('../../utils/api')
-
 Page({
   data: {
-    dateRange: 'today',
-    startDate: '2026-04-01',
-    endDate: '2026-04-15',
-    dashboard: null,
-    sentiment: null,
-    uploadResult: null,
-    uploadTitle: '景区常见问题文档',
-    uploadCategory: 'faq',
-    selectedFileName: '',
-    selectedFilePath: '',
-    systemConfig: null,
-    loading: false,
-    errorText: '',
+    userName: '游客',
+    scenicName: '灵山胜境',
+    totalChats: 0,
+    totalMessages: 0,
+    totalDays: 0,
+    chatHistory: [],
+    expandedIndex: null,
   },
 
   onLoad() {
-    this.fetchDashboard()
-    this.fetchSentiment()
-    this.fetchSystemConfig()
+    this.loadProfile()
   },
 
-  onFieldChange(e) {
-    const { field } = e.currentTarget.dataset
-    const value = e.detail && typeof e.detail.value !== 'undefined'
-      ? e.detail.value
-      : e.currentTarget.dataset.value
-    this.setData({ [field]: value })
+  onShow() {
+    this.loadProfile()
   },
 
-  setLoading(loading) {
-    this.setData({ loading })
-    wx.showNavigationBarLoading()
-    if (!loading) {
-      wx.hideNavigationBarLoading()
-    }
-  },
-
-  async fetchDashboard() {
-    this.setLoading(true)
-    this.setData({ errorText: '' })
+  loadProfile() {
     try {
-      const data = await api.dashboard(this.data.dateRange)
-      this.setData({ dashboard: data })
-    } catch (err) {
-      this.setData({ errorText: err.message || '获取大屏数据失败' })
-    } finally {
-      this.setLoading(false)
-    }
-  },
+      var stored = wx.getStorageSync('guide_chat_history') || []
+      var reversed = stored.slice().reverse()
+      var totalMsgs = 0
+      for (var i = 0; i < stored.length; i++) {
+        totalMsgs += stored[i].messages ? stored[i].messages.length : 0
+      }
 
-  async fetchSentiment() {
-    this.setLoading(true)
-    this.setData({ errorText: '' })
-    try {
-      const data = await api.sentimentReport(this.data.startDate, this.data.endDate)
-      this.setData({ sentiment: data })
-    } catch (err) {
-      this.setData({ errorText: err.message || '获取情绪报告失败' })
-    } finally {
-      this.setLoading(false)
-    }
-  },
-
-  async fetchSystemConfig() {
-    try {
-      const data = await api.systemConfig()
-      this.setData({ systemConfig: data })
-    } catch (err) {
-      this.setData({ errorText: err.message || '获取系统配置失败' })
-    }
-  },
-
-  chooseKnowledgeFile() {
-    wx.chooseMessageFile({
-      count: 1,
-      type: 'file',
-      extension: ['txt', 'md'],
-      success: ({ tempFiles }) => {
-        const target = tempFiles && tempFiles[0]
-        if (!target) {
-          return
+      var history = reversed.map(function (item) {
+        var firstUserMsg = ''
+        if (item.messages) {
+          for (var j = 0; j < item.messages.length; j++) {
+            if (item.messages[j].role === 'user') {
+              firstUserMsg = item.messages[j].content
+              break
+            }
+          }
         }
-        this.setData({
-          selectedFileName: target.name,
-          selectedFilePath: target.path,
-        })
-      },
-      fail: () => {
-        this.setData({ errorText: '未选择知识库文件' })
+        return {
+          id: item.id,
+          date: item.date,
+          time: item.time,
+          timestamp: item.timestamp,
+          preview: firstUserMsg || '(空对话)',
+          messageCount: item.messages ? item.messages.length : 0,
+          messages: item.messages || [],
+          scenicName: item.scenicName || '灵山胜境',
+        }
+      })
+
+      var days = 0
+      if (stored.length > 0) {
+        var dates = {}
+        for (var k = 0; k < stored.length; k++) {
+          dates[stored[k].date] = true
+        }
+        days = Object.keys(dates).length
+      }
+
+      this.setData({
+        chatHistory: history,
+        totalChats: stored.length,
+        totalMessages: totalMsgs,
+        totalDays: days || 1,
+      })
+    } catch (e) {
+      console.warn('加载个人中心数据失败', e)
+    }
+  },
+
+  toggleDetail(e) {
+    var index = e.currentTarget.dataset.index
+    if (this.data.expandedIndex === index) {
+      this.setData({ expandedIndex: null })
+    } else {
+      this.setData({ expandedIndex: index })
+    }
+  },
+
+  clearHistory() {
+    var self = this
+    wx.showModal({
+      title: '确认清空',
+      content: '聊天记录仅保存在本地，清空后无法恢复。确定要继续吗？',
+      confirmText: '清空',
+      confirmColor: '#D94A3A',
+      success: function (res) {
+        if (res.confirm) {
+          try {
+            wx.removeStorageSync('guide_chat_history')
+          } catch (e) {
+            // ignore
+          }
+          self.setData({
+            chatHistory: [],
+            totalChats: 0,
+            totalMessages: 0,
+            totalDays: 0,
+            expandedIndex: null,
+          })
+          wx.showToast({ title: '已清空', icon: 'success' })
+        }
       },
     })
-  },
-
-  async uploadKnowledge() {
-    if (!this.data.selectedFilePath) {
-      this.setData({ errorText: '请先选择知识库文件' })
-      return
-    }
-
-    this.setLoading(true)
-    this.setData({ errorText: '' })
-    try {
-      const data = await api.uploadKnowledge(this.data.selectedFilePath, {
-        title: this.data.uploadTitle,
-        category: this.data.uploadCategory,
-      })
-      this.setData({ uploadResult: data })
-      this.fetchDashboard()
-    } catch (err) {
-      this.setData({ errorText: err.message || '上传知识库失败' })
-    } finally {
-      this.setLoading(false)
-    }
   },
 })
