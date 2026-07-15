@@ -18,4 +18,7 @@ public class TtsRequestDTO {
 
     @JsonProperty("extra_params")
     private Map<String, Object> extraParams;
+
+    @JsonProperty("language")
+    private String language;
 }

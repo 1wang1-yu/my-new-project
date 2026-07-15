@@ -12,13 +12,15 @@ function chat(payload) {
 // 流式智能问答：当前微信小程序对 SSE 支持不稳定，统一走普通接口
 // 后端已做模型/提示词/上下文优化，响应速度已有明显提升
 function chatStream(payload, onChunk, onDone) {
-  chat(payload).then(function (data) {
-    var meta = { session_id: data.session_id, suggested_questions: data.suggested_questions }
+  var chatTask = chat(payload)
+  chatTask.then(function (data) {
+    var meta = { session_id: data.session_id, suggested_questions: data.suggested_questions, emotion: data.emotion }
     if (onChunk) onChunk(data.answer, meta)
     if (onDone) onDone(null, meta)
   }).catch(function (err) {
     if (onDone) onDone(err, null)
   })
+  return chatTask
 }
 
 function recommendRoute(payload) {
@@ -78,6 +80,54 @@ function systemConfig() {
   })
 }
 
+function fetchSpots(userId, lat, lng) {
+  return request({
+    url: '/api/v1/user/spots',
+    method: 'GET',
+    data: { userId, lat, lng },
+  })
+}
+
+function fetchCheckIns(userId) {
+  return request({
+    url: '/api/v1/user/checkins',
+    method: 'GET',
+    data: { userId },
+  })
+}
+
+// 获取后台设置的当前激活形象
+function fetchActiveAvatar() {
+  return request({
+    url: '/api/admin/avatars/active',
+    method: 'GET',
+  }).then(function (data) { return data.active || '' })
+}
+
+function fetchAttractions() {
+  return request({
+    url: '/api/v1/route/attractions',
+    method: 'GET',
+  })
+}
+
+function fetchAttractionCoordinate(name) {
+  return request({
+    url: '/api/v1/route/attraction/coordinate',
+    method: 'GET',
+    data: { name: name },
+  })
+}
+
+// 结束会话并提交满意度评分
+function endSession(sessionKey, satisfaction) {
+  return request({
+    url: '/api/v1/chat/end',
+    method: 'POST',
+    data: { sessionKey: sessionKey, satisfaction: satisfaction },
+  })
+}
+
 module.exports = {
   chat,
   chatStream,
@@ -88,4 +138,10 @@ module.exports = {
   dashboard,
   sentimentReport,
   systemConfig,
+  fetchSpots,
+  fetchCheckIns,
+  endSession,
+  fetchActiveAvatar,
+  fetchAttractions,
+  fetchAttractionCoordinate,
 }

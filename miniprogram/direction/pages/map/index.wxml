@@ -1,0 +1,40 @@
+<view class="page-map">
+  <!-- 地图 -->
+  <map id="scenicMap"
+    latitude="{{latitude}}"
+    longitude="{{longitude}}"
+    scale="{{scale}}"
+    markers="{{markers}}"
+    show-location="{{true}}"
+    bindmarkertap="onMarkerTap"
+    style="width:100%;height:100vh;">
+  </map>
+
+  <!-- 顶部操作栏 -->
+  <view class="map-topbar">
+    <view class="map-location" bindtap="refreshLocation">
+      <text>📍 {{userAddress}}</text>
+    </view>
+  </view>
+
+  <!-- 景点详情面板 -->
+  <view class="spot-panel" wx:if="{{showSpotPanel && selectedSpot}}">
+    <view class="spot-panel-head">
+      <text class="spot-panel-name">{{selectedSpot.name || selectedSpot.spot_name}}</text>
+      <text class="spot-panel-close" bindtap="closeSpotPanel">✕</text>
+    </view>
+    <view class="spot-panel-body">
+      <view class="spot-info-row" wx:if="{{selectedSpot.distance != null}}">
+        <text class="spot-info-label">距离</text>
+        <text class="spot-info-value">{{selectedSpot.distance}}m</text>
+      </view>
+      <view class="spot-info-row" wx:if="{{selectedSpot.checked_in}}">
+        <text class="spot-info-label">状态</text>
+        <text class="spot-info-value" style="color:var(--green);">✅ 已打卡</text>
+      </view>
+    </view>
+    <view class="spot-panel-actions">
+      <button class="navi-btn" bindtap="navigateToSpot">🚶 导航到这里</button>
+    </view>
+  </view>
+</view>

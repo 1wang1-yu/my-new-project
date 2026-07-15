@@ -1,0 +1,39 @@
+<view class="page-shell">
+
+  <block wx:if="{{chatHistory.length > 0}}">
+    <view wx:for="{{chatHistory}}" wx:key="id" class="history-card card">
+      <view class="hc-head" bindtap="toggleDetail" data-index="{{index}}">
+        <view class="hc-top">
+          <text class="hc-date">📅 {{item.date}}</text>
+          <text class="hc-time">{{item.time}}</text>
+        </view>
+        <view class="hc-preview">{{item.preview}}</view>
+        <view class="hc-bottom">
+          <text class="hc-count">{{item.messageCount}} {{t.msgCount}}</text>
+          <text class="hc-arrow">{{expandedIndex === index ? t.collapse : t.viewDetail}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{expandedIndex === index}}" class="inline-detail">
+        <block wx:for="{{item.messages}}" wx:key="index">
+          <view class="dmsg {{item.role === 'user' ? 'dmsg-user' : 'dmsg-assistant'}}">
+            <text class="dmsg-role">{{item.role === 'user' ? '👤 ' + t.roleYou : '🧑‍🏫 ' + t.roleGuide}}</text>
+            <text class="dmsg-content">{{item.content}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+  </block>
+
+  <view wx:else class="empty-state">
+    <text class="empty-icon">💬</text>
+    <text class="empty-text">{{t.emptyHistory}}</text>
+    <text class="empty-sub">{{t.emptyHint}}</text>
+  </view>
+
+  <view wx:if="{{chatHistory.length > 0}}" class="action-area">
+    <button class="clear-btn" bindtap="clearHistory">🗑️ {{t.clearBtn}}</button>
+    <text class="action-hint">{{t.clearHint}}</text>
+  </view>
+
+</view>

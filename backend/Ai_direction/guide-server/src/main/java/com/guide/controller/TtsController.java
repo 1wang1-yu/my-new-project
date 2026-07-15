@@ -34,7 +34,7 @@ public class TtsController {
             return ApiResponse.ok(ttsService.synthesizeVideo(req.getText(), vk, res, bg));
         }
         return ApiResponse.ok(ttsService.synthesize(
-                req.getText(), req.getVoiceId(), req.getSpeed(), req.getEmotion()));
+                req.getText(), req.getVoiceId(), req.getSpeed(), req.getEmotion(), req.getLanguage()));
     }
 
     private static String safeParam(Map<String, Object> params, String key, String def) {

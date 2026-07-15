@@ -1,0 +1,97 @@
+.page-map {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 顶部栏 */
+.map-topbar {
+  position: absolute;
+  top: 20rpx;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+.map-location {
+  background: rgba(255,255,255,0.95);
+  border-radius: 40rpx;
+  padding: 14rpx 32rpx;
+  font-size: 26rpx;
+  color: #333;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.1);
+  pointer-events: auto;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.map-location:active {
+  opacity: 0.8;
+}
+
+/* 景点详情面板 */
+.spot-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 28rpx;
+  box-shadow: 0 -8rpx 30rpx rgba(0,0,0,0.1);
+  z-index: 20;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.spot-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.spot-panel-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.spot-panel-close {
+  font-size: 36rpx;
+  color: #999;
+  padding: 8rpx;
+}
+.spot-panel-body {
+  margin-bottom: 20rpx;
+}
+.spot-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+  font-size: 28rpx;
+}
+.spot-info-label {
+  color: #999;
+}
+.spot-info-value {
+  color: #333;
+  font-weight: 500;
+}
+.navi-btn {
+  width: 100%;
+  height: 80rpx;
+  background: linear-gradient(135deg, #3D8B7E, #2D6B5E);
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 80rpx;
+}
+.navi-btn::after { border: none; }

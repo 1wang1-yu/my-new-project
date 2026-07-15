@@ -1,0 +1,51 @@
+page { background: #F2F4F3; }
+
+.page-shell { min-height: 100vh; padding: 24rpx; box-sizing: border-box; }
+
+/* summary */
+.summary-card { padding: 28rpx 24rpx; margin-bottom: 16rpx; background: #FFF; border-radius: 20rpx; border: 1rpx solid rgba(61,139,126,0.06); box-shadow: 0 4rpx 24rpx rgba(30,45,43,0.04); }
+.summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14rpx; }
+.summary-label { font-size: 24rpx; color: #7A8B87; }
+.summary-num { font-size: 36rpx; font-weight: 700; color: #3D8B7E; }
+.progress-bar { height: 10rpx; border-radius: 999rpx; background: #E8EDEA; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999rpx; background: linear-gradient(90deg, #3D8B7E, #5BAF9A); transition: width 0.5s; }
+
+/* gps */
+.gps-bar { display: flex; align-items: center; justify-content: space-between; padding: 0 4rpx; margin-bottom: 20rpx; }
+.gps-text { font-size: 22rpx; color: #7A8B87; }
+.gps-err { color: #D94A3A; }
+.refresh-btn { height: 48rpx; line-height: 48rpx; padding: 0 22rpx; font-size: 20rpx; color: #3D8B7E; background: #E8F2F0; border-radius: 999rpx; border: none; }
+.refresh-btn:active { background: #D0E5E1; }
+
+/* photo grid */
+.photo-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
+
+.photo-card { width: 49%; border-radius: 20rpx; overflow: hidden; box-shadow: 0 4rpx 20rpx rgba(30,45,43,0.06); margin-bottom: 16rpx; transition: all 0.3s; }
+
+/* 已打卡：彩色 */
+.card-lit { opacity: 1; }
+
+/* 未打卡：整体降灰 */
+.card-dim { opacity: 0.65; }
+.card-dim .photo-box { filter: grayscale(100%) brightness(0.55); }
+.card-dim .photo-name { color: #9BA6A3; }
+.card-dim .photo-cat { color: #B5C1BD; }
+
+/* 照片区域 */
+.photo-box { height: 180rpx; display: flex; align-items: center; justify-content: center; position: relative; transition: filter 0.4s; }
+.photo-emoji { font-size: 72rpx; position: relative; z-index: 1; }
+.photo-img { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 0; }
+
+/* 灰色遮罩 + 锁 */
+.photo-mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; z-index: 2; }
+.mask-lock { font-size: 40rpx; opacity: 0.7; }
+
+/* 已打卡徽章 */
+.photo-badge { position: absolute; top: 10rpx; right: 10rpx; font-size: 32rpx; z-index: 3; filter: drop-shadow(0 2rpx 6rpx rgba(0,0,0,0.2)); }
+
+/* 信息 */
+.photo-info { padding: 16rpx 16rpx 18rpx; background: #FFF; }
+.photo-name { display: block; font-size: 26rpx; font-weight: 600; color: #1E2D2B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.photo-cat { display: block; font-size: 20rpx; color: #7A8B87; margin-top: 4rpx; }
+
+.empty { text-align: center; padding: 120rpx 0; font-size: 24rpx; color: #B5C1BD; }

@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=mybatis;encrypt=false;sendStringParametersAsUnicode=true
+    username: sa
+    password: Root@123456
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  mvc:
+    view:
+      prefix: /WEB-INF/jsp/
+      suffix: .jsp
+
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.booksite.entity

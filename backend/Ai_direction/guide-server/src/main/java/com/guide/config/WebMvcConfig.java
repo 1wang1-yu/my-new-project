@@ -43,6 +43,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/admin-console/**")
                 .addResourceLocations("classpath:/static/admin-console/");
+
+        // 数字人模型文件（VRM / GLB）
+        registry.addResourceHandler("/avatars/**")
+                .addResourceLocations("classpath:/static/");
         // Knife4j 文档页面资源
         registry.addResourceHandler("/doc.html")
                 .addResourceLocations("classpath:/META-INF/resources/");

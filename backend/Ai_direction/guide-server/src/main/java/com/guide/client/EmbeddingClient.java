@@ -20,7 +20,7 @@ public class EmbeddingClient {
     private final String baseUrl;
 
     public EmbeddingClient() {
-        this.apiKey = "sk-e6fca972c66f43e1ac827b9553bf1842";
+        this.apiKey = "sk-ws-H.EMYXXED.Hqom.MEQCIBOsN2arr55ch1z5PWMRxkhfuWZG3T2wbvX4zqRybsBnAiBI_2jMX6tiXHzR0-38MjOmwCfjmten6U9BSYbMlQMb0A";
         this.baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)

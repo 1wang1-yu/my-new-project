@@ -12,9 +12,12 @@ import java.time.LocalDateTime;
 public class KnowledgeDoc {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String title;
+    @Column(columnDefinition = "NVARCHAR(100)")
     private String category;
-    @Lob private String content;
+    @Lob @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String content;
     private String fileUrl;
     private Integer chunkCount;
     private Integer indexStatus;    // 0待索引 1已索引 2失败

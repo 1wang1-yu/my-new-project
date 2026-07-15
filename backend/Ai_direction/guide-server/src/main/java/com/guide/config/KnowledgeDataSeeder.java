@@ -5,7 +5,9 @@ import com.guide.mapper.KnowledgeDocMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,13 +47,18 @@ public class KnowledgeDataSeeder implements CommandLineRunner {
     );
 
     @Override
+    @Transactional
     public void run(String... args) {
-        long count = knowledgeDocMapper.count();
-        if (count > 0) {
+        if (isDataValid()) {
+            long count = knowledgeDocMapper.count();
             log.info("知识库已有 {} 条记录，跳过种子数据", count);
             return;
         }
-        log.info("开始插入知识库种子数据...");
+
+        log.warn("检测到知识库中文数据乱码（VARCHAR 存储导致），将清除重建...");
+        knowledgeDocMapper.deleteAll();
+        log.info("已清除旧数据，开始插入正确的种子数据...");
+
         LocalDateTime now = LocalDateTime.now();
         for (Map<String, String> item : SEED_DATA) {
             KnowledgeDoc doc = new KnowledgeDoc();
@@ -65,6 +72,25 @@ public class KnowledgeDataSeeder implements CommandLineRunner {
             doc.setUpdateTime(now);
             knowledgeDocMapper.save(doc);
         }
-        log.info("知识库种子数据插入完成，共 {} 条", SEED_DATA.size());
+        log.info("知识库种子数据插入完成，共 {} 条（已使用 NVARCHAR 编码）", SEED_DATA.size());
+    }
+
+    /** 检查知识库数据是否有效（中文未乱码） */
+    private boolean isDataValid() {
+        long count = knowledgeDocMapper.count();
+        if (count == 0) return true; // 空库，需要插入
+        // 取第一条标题检查是否包含中文字符
+        List<KnowledgeDoc> docs = knowledgeDocMapper.findTopN(PageRequest.of(0, 1));
+        if (!docs.isEmpty()) {
+            String title = docs.get(0).getTitle();
+            if (title != null) {
+                for (char c : title.toCharArray()) {
+                    if (c >= '一' && c <= '鿿') {
+                        return true; // 包含汉字，数据正常
+                    }
+                }
+            }
+        }
+        return false; // 没有汉字，说明乱码了
     }
 }

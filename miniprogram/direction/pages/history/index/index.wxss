@@ -1,0 +1,33 @@
+page { background: #F2F4F3; }
+
+.page-shell { min-height: 100vh; padding: 24rpx; box-sizing: border-box; }
+
+.card { background: #FFF; border-radius: 20rpx; border: 1rpx solid rgba(61,139,126,0.06); box-shadow: 0 4rpx 24rpx rgba(30,45,43,0.04); }
+
+.history-card { padding: 22rpx 24rpx; margin-bottom: 16rpx; }
+.history-card:active { transform: scale(0.98); }
+.hc-top { display: flex; align-items: center; gap: 10rpx; margin-bottom: 10rpx; }
+.hc-date { font-size: 24rpx; color: #1E2D2B; font-weight: 600; }
+.hc-time { font-size: 22rpx; color: #7A8B87; }
+.hc-preview { font-size: 26rpx; color: #5A6B67; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 12rpx; }
+.hc-bottom { display: flex; justify-content: space-between; align-items: center; }
+.hc-count { font-size: 22rpx; color: #7A8B87; }
+.hc-arrow { font-size: 24rpx; color: #3D8B7E; font-weight: 500; }
+
+.inline-detail { margin-top: 18rpx; padding-top: 18rpx; border-top: 1rpx solid rgba(61,139,126,0.08); max-height: 480rpx; overflow-y: auto; }
+.dmsg { padding: 16rpx 20rpx; border-radius: 14rpx; margin-bottom: 14rpx; }
+.dmsg:last-child { margin-bottom: 0; }
+.dmsg-user { background: linear-gradient(135deg, #3D8B7E, #2C6B60); color: #FFF; }
+.dmsg-assistant { background: #F2F4F3; color: #1E2D2B; }
+.dmsg-role { display: block; font-size: 20rpx; font-weight: 600; margin-bottom: 8rpx; opacity: 0.7; }
+.dmsg-content { display: block; font-size: 26rpx; line-height: 1.6; word-break: break-all; }
+
+.empty-state { text-align: center; padding: 120rpx 0; }
+.empty-icon { display: block; font-size: 64rpx; margin-bottom: 16rpx; }
+.empty-text { display: block; font-size: 28rpx; color: #7A8B87; margin-bottom: 8rpx; }
+.empty-sub { display: block; font-size: 24rpx; color: #B5C1BD; }
+
+.action-area { margin-top: 32rpx; padding-bottom: 48rpx; }
+.clear-btn { height: 88rpx; line-height: 88rpx; border-radius: 20rpx; background: #FFF; color: #D94A3A; font-size: 28rpx; font-weight: 500; border: 1rpx solid rgba(217,74,58,0.15); text-align: center; }
+.clear-btn:active { background: #FEF3F2; }
+.action-hint { display: block; margin-top: 16rpx; text-align: center; font-size: 22rpx; color: #B5C1BD; }

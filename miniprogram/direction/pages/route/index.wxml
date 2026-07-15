@@ -1,0 +1,109 @@
+<view class="page-shell">
+  <view class="header-bar">
+    <view class="header-left">
+      <view class="header-greeting">🗺️ 路线规划</view>
+      <view class="header-scenic">定制你的专属游览路线</view>
+    </view>
+  </view>
+
+  <!-- 会话关联提示 -->
+  <view class="session-hint" wx:if="{{sessionId}}" bindtap="importFromChat">
+    <text>💬 已关联聊天记录，你的景点、偏好和游玩时间将自动纳入路线规划</text>
+  </view>
+  <view class="session-hint" wx:elif="{{!sessionId}}" style="background:#FFF8E1;color:#F57F17;">
+    <text>💡 先和 AI 聊天告诉我你的需求，例如「我想去灵山大佛和梵宫，从早上8点玩到晚上10点」</text>
+  </view>
+
+  <!-- 兴趣偏好 -->
+  <view class="section-block">
+    <view class="section-title">🎯 选择兴趣偏好</view>
+    <view class="tag-grid">
+      <view wx:for="{{tagItems}}" wx:key="name"
+        class="{{item.active ? 'tag tag-on' : 'tag'}}"
+        bindtap="toggleInterest" data-name="{{item.name}}">{{item.name}}</view>
+    </view>
+  </view>
+
+  <!-- 自定义偏好输入 -->
+  <view class="section-block">
+    <view class="section-title">✏️ 输入你的个性化需求</view>
+    <view class="pref-input-wrap">
+      <textarea class="pref-input" placeholder="例如：我喜欢安静一点的地方，不喜欢人多;或者：带老人出行，需要平坦无障碍的路线;再或者：主要想去拍照，喜欢古风建筑"
+        value="{{customPreference}}" bindinput="onPreferenceInput" maxlength="500"
+        auto-height="{{true}}" />
+    </view>
+    <view class="pref-hint">💡 填得越具体，路线越贴合你的心意</view>
+  </view>
+
+  <!-- 景点选择 -->
+  <view class="section-block">
+    <view class="section-title">
+      🏛️ 选择想去的景点
+      <text class="section-subtitle" wx:if="{{selectedAttractions.length > 0}}">（已选 {{selectedAttractions.length}} 个）</text>
+    </view>
+    <view class="attraction-grid" wx:if="{{allAttractions.length > 0}}">
+      <view wx:for="{{allAttractions}}" wx:key="*this"
+        class="attraction-item {{selectedAttractions.indexOf(item) >= 0 ? 'attraction-on' : ''}}"
+        bindtap="toggleAttraction" data-name="{{item}}">
+        {{item}}
+        <text class="attraction-check" wx:if="{{selectedAttractions.indexOf(item) >= 0}}">✓</text>
+      </view>
+    </view>
+    <view class="attraction-loading" wx:elif="{{loadingAttractions}}">加载景点中...</view>
+    <view class="attraction-empty" wx:else>暂无可用景点列表</view>
+  </view>
+
+  <!-- 时间范围 -->
+  <view class="section-block">
+    <view class="section-title">⏰ 游玩时间</view>
+    <view class="time-row">
+      <picker mode="time" value="{{startTime}}" bindchange="onStartTimeChange">
+        <view class="time-picker">
+          <text class="time-label">开始</text>
+          <text class="time-value">{{startTime || '选择'}}</text>
+        </view>
+      </picker>
+      <text class="time-sep">→</text>
+      <picker mode="time" value="{{endTime}}" bindchange="onEndTimeChange">
+        <view class="time-picker">
+          <text class="time-label">结束</text>
+          <text class="time-value">{{endTime || '选择'}}</text>
+        </view>
+      </picker>
+      <view class="duration-badge" wx:if="{{durationStr}}">约 {{durationStr}}</view>
+    </view>
+  </view>
+  <button class="route-btn" bindtap="getRoute" loading="{{loading}}">🚀 AI 智能规划路线</button>
+  <!-- 路线结果 -->
+  <view class="route-list" wx:if="{{routeResult.length > 0}}">
+    <block wx:for="{{routeResult}}" wx:key="name">
+      <view class="route-card {{index === 0 ? 'route-blue' : 'route-green'}}">
+        <view class="route-card-head">
+          <view class="route-dot {{index === 0 ? 'dot-primary' : 'dot-secondary'}}">{{index + 1}}</view>
+          <view class="route-card-title">
+            <text class="route-name">{{item.name}}</text>
+            <text class="route-time">🕐 {{item.estimated_time}}分钟</text>
+          </view>
+        </view>
+        <view class="route-stops">
+          <view wx:for="{{item.stops}}" wx:key="*this" wx:for-item="stop" class="route-stop-item">
+            <view class="stop-time">{{stop.time || '--:--'}}</view>
+            <view class="stop-info">
+              <text class="stop-name">{{stop.name || stop}}</text>
+              <text wx:if="{{stop.desc}}" class="stop-desc">{{stop.desc}}</text>
+            </view>
+          </view>
+        </view>
+        <view wx:if="{{item.highlights && item.highlights.length > 0}}" class="route-highlights">
+          <text wx:for="{{item.highlights}}" wx:key="*this" class="highlight-tag">✨ {{item}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view wx:if="{{routeResult.length === 0 && !loading}}" class="empty-hint">
+    <view class="empty-icon">🗺️</view>
+    <text class="empty-text">选择你的兴趣偏好和想去的景点</text>
+    <text class="empty-sub">也可以输入你的个性化需求，让AI为你定制路线</text>
+  </view>
+</view>

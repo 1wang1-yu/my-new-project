@@ -2,8 +2,11 @@ package com.guide.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.guide.annotation.LogOperation;
+import com.guide.entity.Session;
+import com.guide.mapper.GuideSessionMapper;
 import com.guide.pojo.dto.ApiResponse;
 import com.guide.pojo.dto.ChatRequestDTO;
+import com.guide.pojo.dto.SessionEndDTO;
 import com.guide.service.ChatService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 public class ChatController {
 
     private final ChatService chatService;
+    private final GuideSessionMapper guideSessionMapper;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @ApiOperation(value = "智能问答", notes = "接收文本或语音转写后的游客问题，返回答案、TTS 地址、情绪和建议追问。")
@@ -41,7 +45,13 @@ public class ChatController {
                 req.getUserId(),
                 req.getSessionId(),
                 message,
-                req.getInputType()
+                req.getInputType(),
+                req.getLanguage(),
+                req.getAge(),
+                req.getGender(),
+                req.getLocation(),
+                req.getLatitude(),
+                req.getLongitude()
         );
         return ApiResponse.ok(Map.of(
                 "answer", reply.answer(),
@@ -50,6 +60,19 @@ public class ChatController {
                 "suggested_questions", reply.suggestedQuestions(),
                 "session_id", reply.sessionId()
         ));
+    }
+
+    @ApiOperation(value = "结束会话并评分", notes = "游客结束会话时提交满意度评分（1-5），记录到 t_session")
+    @PostMapping("/end")
+    @LogOperation("chat_end")
+    public ApiResponse<Void> endSession(@Valid @RequestBody SessionEndDTO dto) {
+        guideSessionMapper.findBySessionKey(dto.getSessionKey()).ifPresent(session -> {
+            session.setSatisfaction(dto.getSatisfaction());
+            session.setEndTime(java.time.LocalDateTime.now());
+            session.setStatus(0);
+            guideSessionMapper.save(session);
+        });
+        return ApiResponse.ok(null);
     }
 
     @ApiOperation(value = "流式智能问答", notes = "SSE 流式返回答案，适合需要即时反馈的场景。")
@@ -67,7 +90,9 @@ public class ChatController {
         CompletableFuture.runAsync(() -> {
             try {
                 ChatService.SetupResult setup = chatService.prepareStream(
-                        req.getUserId(), req.getSessionId(), userMessage, req.getInputType());
+                        req.getUserId(), req.getSessionId(), userMessage, req.getInputType(), req.getLanguage(),
+                        req.getAge(), req.getGender(), req.getLocation(),
+                        req.getLatitude(), req.getLongitude());
 
                 chatService.streamToConsumer(setup, chunk -> {
                     try {

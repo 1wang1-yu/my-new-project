@@ -1,75 +1,58 @@
-<view class="profile-page">
+<view class="page-shell">
 
-  <!-- ========== 用户信息卡片 ========== -->
+  <!-- 用户信息卡片 -->
   <view class="profile-card card">
-    <view class="profile-avatar">👤</view>
-    <view class="profile-name">{{userName}}</view>
-    <view class="profile-sub">{{scenicName}} · 智能导览用户</view>
+    <view class="profile-avatar" wx:if="{{!avatarUrl}}">👤</view>
+    <image class="profile-avatar-img" wx:else src="{{avatarUrl}}" mode="aspectFill" />
+    <view class="profile-name">{{nickName || t.userName}}</view>
     <view class="profile-stats">
       <view class="ps-item">
         <text class="ps-num">{{totalChats}}</text>
-        <text class="ps-label">次对话</text>
+        <text class="ps-label">{{t.statChats}}</text>
       </view>
       <view class="ps-divider"></view>
       <view class="ps-item">
         <text class="ps-num">{{totalMessages}}</text>
-        <text class="ps-label">条消息</text>
+        <text class="ps-label">{{t.statMsgs}}</text>
       </view>
       <view class="ps-divider"></view>
       <view class="ps-item">
         <text class="ps-num">{{totalDays}}</text>
-        <text class="ps-label">天使用</text>
+        <text class="ps-label">{{t.statDays}}</text>
       </view>
     </view>
   </view>
 
-  <!-- ========== 聊天记录 ========== -->
-  <view class="history-section">
-    <view class="section-header">
-      <text class="section-title">💬 聊天记录</text>
-      <text wx:if="{{chatHistory.length > 0}}" class="section-count">{{chatHistory.length}}</text>
-    </view>
+  <!-- 功能入口卡片 -->
+  <view class="menu-section">
 
-    <block wx:if="{{chatHistory.length > 0}}">
-      <view wx:for="{{chatHistory}}" wx:key="id" class="history-card card">
-        <view class="hc-head" bindtap="toggleDetail" data-index="{{index}}">
-          <view class="hc-top">
-            <view class="hc-date">
-              <text class="hc-date-icon">📅</text>
-              <text>{{item.date}}</text>
-            </view>
-            <view class="hc-time">{{item.time}}</view>
-          </view>
-          <view class="hc-preview">{{item.preview}}</view>
-          <view class="hc-bottom">
-            <text class="hc-count">{{item.messageCount}} 条消息</text>
-            <text class="hc-arrow">{{expandedIndex === index ? '收起 ▲' : '查看详情 ›'}}</text>
-          </view>
-        </view>
-
-        <!-- 内联展开的对话详情 -->
-        <view wx:if="{{expandedIndex === index}}" class="inline-detail">
-          <block wx:for="{{item.messages}}" wx:key="index">
-            <view class="dmsg {{item.role === 'user' ? 'dmsg-user' : 'dmsg-assistant'}}">
-              <text class="dmsg-role">{{item.role === 'user' ? '👤 你' : '🧑‍🏫 小导'}}</text>
-              <text class="dmsg-content">{{item.content}}</text>
-            </view>
-          </block>
-        </view>
+    <view class="menu-card card" bindtap="openSettings">
+      <view class="menu-icon">⚙️</view>
+      <view class="menu-info">
+        <text class="menu-title">{{t.settingsTitle}}</text>
+        <text class="menu-sub">{{settingsSummary}}</text>
       </view>
-    </block>
-
-    <view wx:else class="empty-state">
-      <view class="empty-icon">💬</view>
-      <view class="empty-text">暂无聊天记录</view>
-      <view class="empty-sub">去首页开始一段导览对话吧</view>
+      <text class="menu-arrow">›</text>
     </view>
-  </view>
 
-  <!-- ========== 操作区 ========== -->
-  <view class="action-section">
-    <button class="clear-btn" bindtap="clearHistory">🗑️ 清空聊天记录</button>
-    <view class="action-hint">聊天记录仅保存在本地，清空后无法恢复</view>
+    <view class="menu-card card" bindtap="openHistory">
+      <view class="menu-icon">💬</view>
+      <view class="menu-info">
+        <text class="menu-title">{{t.historyTitle}}</text>
+        <text class="menu-sub">{{historySummary}}</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+
+    <view class="menu-card card logout" bindtap="onLogout">
+      <view class="menu-icon">🚪</view>
+      <view class="menu-info">
+        <text class="menu-title" style="color:#d94a3a;">退出登录</text>
+        <text class="menu-sub">清除登录信息</text>
+      </view>
+      <text class="menu-arrow" style="color:#d94a3a;">›</text>
+    </view>
+
   </view>
 
 </view>

@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface GuideUserMapper extends JpaRepository<User, Long> {
 
     Optional<User> findByOpenId(String openId);
+
+    Optional<User> findByUsername(String username);
 }

@@ -2,9 +2,12 @@
 var glbLoader = require('./glb-loader.js');
 
 var THREE = null;
+var THREE_CANVAS = null;
 
 function ensureThree(canvas) {
-  if (THREE) return THREE;
+  // 如果 canvas 变了（页面重建后），必须重新创建 THREE 实例
+  if (THREE && THREE_CANVAS === canvas) return THREE;
+  THREE_CANVAS = canvas;
   var createScopedThreejs = require('threejs-miniprogram').createScopedThreejs;
   THREE = createScopedThreejs(canvas);
   return THREE;
@@ -30,22 +33,32 @@ function Avatar3D() {
   this.blinkTimer = 3.0;
   this.floatPhase = 0;
   this.modelBaseY = 0;
+
+  // 眨眼 morph 列表
+  this.blinkMorphs = [];
 }
 
 Avatar3D.prototype.init = function (canvas, width, height, modelUrl) {
   this.canvas = canvas;
   var T = ensureThree(canvas);
 
-  this.renderer = new T.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-  this.renderer.setSize(width, height);
-  this.renderer.setPixelRatio(Math.min(2, wx.getSystemInfoSync().pixelRatio || 2));
-  this.renderer.setClearColor(0x000000, 0);
+  try {
+    this.renderer = new T.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(2, wx.getSystemInfoSync().pixelRatio || 2));
+    this.renderer.setClearColor(0x000000, 0);
+  } catch (e) {
+    console.error('WebGL 渲染器初始化失败:', e);
+    THREE = null;  // 重置 THREE，允许后续重试
+    THREE_CANVAS = null;
+    return;
+  }
 
   this.scene = new T.Scene();
 
   this.camera = new T.PerspectiveCamera(40, width / Math.max(height, 1), 0.1, 100);
-  this.camera.position.set(0, 0.9, 3.8);
-  this.camera.lookAt(0, 0.9, 0);
+  this.camera.position.set(0, 0.6, 2.5);
+  this.camera.lookAt(0, 0.6, 0);
 
   this.scene.add(new T.AmbientLight(0xffffff, 0.7));
   var key = new T.DirectionalLight(0xffffff, 0.8);
@@ -91,6 +104,10 @@ Avatar3D.prototype.scanMorphTargets = function (gltf) {
   var self = this;
   this.morphMeshes = [];
   this.morphMap = {};
+  this.blinkMorphs = [];
+
+  // 下半脸 morph 排除标记（不参与口型以外控制）
+  var LOWER_FACE_KEYS = /cheek|puff|suck/i;
 
   if (this.modelRoot) {
     this.modelRoot.traverse(function (child) {
@@ -113,6 +130,7 @@ Avatar3D.prototype.scanMorphTargets = function (gltf) {
             var idx = dict[name];
             var lower = name.toLowerCase();
 
+            // 1) 检测是否为口型视素（原有逻辑）
             var category = null;
             if (/_a$/i.test(lower) || /^(a|aa|mouth.*open|jaw.*open|vowel.*a)/i.test(lower)) category = 'A';
             else if (/_i$/i.test(lower) || /^(i|ih|ee|mouth.*smile|vowel.*i)/i.test(lower)) category = 'I';
@@ -123,12 +141,24 @@ Avatar3D.prototype.scanMorphTargets = function (gltf) {
             if (category) {
               if (!self.morphMap[category]) self.morphMap[category] = [];
               self.morphMap[category].push({ mesh: child, index: idx });
+              continue;
+            }
+
+            // 跳过下半脸 morph（留给口型系统）
+            if (LOWER_FACE_KEYS.test(lower)) {
+              continue;
+            }
+            // 检测眨眼 morph
+            if (/blink/i.test(lower) || /eye.*(close|blink)/i.test(lower)) {
+              self.blinkMorphs.push({ mesh: child, index: idx });
             }
           }
         }
       }
     });
   }
+
+  console.log('口型视素:', Object.keys(this.morphMap).join(','));
 };
 
 Avatar3D.prototype.fitModelToView = function () {
@@ -154,7 +184,7 @@ Avatar3D.prototype.fitModelToView = function () {
 
   var newSize = box.getSize(new T.Vector3());
   var faceY = this.modelBaseY + newSize.y * 0.85;
-  var dist = Math.max(newSize.y * 0.35, 0.6);
+  var dist = Math.max(newSize.y * 0.22, 0.35);
   this.camera.position.set(0, faceY * 1.02, dist);
   this.camera.lookAt(0, faceY, 0);
 };
@@ -186,7 +216,7 @@ Avatar3D.prototype.applyMouthBlends = function () {
   var open = this.mouthOpen;
   var viseme = this.currentViseme || 'rest';
 
-  // 重置
+  // 仅重置口型 morph（不影响表情 morph）
   var allKeys = Object.keys(this.morphMap);
   for (var k = 0; k < allKeys.length; k++) {
     var entries = this.morphMap[allKeys[k]];
@@ -197,13 +227,29 @@ Avatar3D.prototype.applyMouthBlends = function () {
 
   if (open < 0.02 || viseme === 'rest') return;
 
-  // 主视素权重
-  this._setMorph(viseme, open * 1.0);
+  // 主视素
+  this._setMorph(viseme, open);
 
-  // 辅助视素：根据主视素混入相邻口型，使过渡更自然
-  if (open > 0.4) {
-    // 张嘴时微混 A 型确保嘴巴张开
-    if (viseme !== 'A') this._setMorph('A', open * 0.25);
+  // 相邻口型混合，让过渡更平滑
+  // A ↔ E ↔ I ↔ U ↔ O 的相邻关系
+  switch (viseme) {
+    case 'A':
+      this._setMorph('E', open * 0.15);
+      break;
+    case 'E':
+      this._setMorph('A', open * 0.2);
+      this._setMorph('I', open * 0.15);
+      break;
+    case 'I':
+      this._setMorph('E', open * 0.2);
+      break;
+    case 'O':
+      this._setMorph('U', open * 0.2);
+      this._setMorph('A', open * 0.1);
+      break;
+    case 'U':
+      this._setMorph('O', open * 0.2);
+      break;
   }
 };
 
@@ -248,34 +294,52 @@ Avatar3D.prototype.update = function () {
   var dt = Math.min((now - this.lastTime) / 1000, 0.1);
   this.lastTime = now;
 
-  // 口型平滑
-  var spd = this.isSpeaking ? 14 : 8;
+  if (!this.isModelReady) return;
+
+  // 口型平滑（说话时更快响应）
+  var spd = this.isSpeaking ? 16 : 8;
   this.mouthOpen += (this.targetMouthOpen - this.mouthOpen) * spd * dt;
 
-  // 视素直接切换（不插值，切换速度由开度平滑过渡掩盖）
+  // 视素切换
   if (this.isSpeaking) {
     this.currentViseme = this.targetViseme;
   } else if (this.mouthOpen < 0.02) {
     this.currentViseme = 'rest';
   }
 
-  if (this.isModelReady) {
-    this.applyMouthBlends();
-  }
+  // ====== 口型 ======
+  this.applyMouthBlends();
 
   // 眨眼
   this.blinkTimer -= dt;
   if (this.blinkTimer <= 0) {
-    this.blinkTimer = 2.2 + Math.random() * 4.5;
+    this.blinkTimer = 1.8 + Math.random() * 4.0;
+    if (this.blinkMorphs.length > 0) {
+      for (var b = 0; b < this.blinkMorphs.length; b++) {
+        var bm = this.blinkMorphs[b];
+        if (bm.mesh && bm.mesh.morphTargetInfluences) {
+          bm.mesh.morphTargetInfluences[bm.index] = 0.9;
+        }
+      }
+      var self = this;
+      setTimeout(function () {
+        for (var b2 = 0; b2 < self.blinkMorphs.length; b2++) {
+          var bm2 = self.blinkMorphs[b2];
+          if (bm2.mesh && bm2.mesh.morphTargetInfluences) {
+            bm2.mesh.morphTargetInfluences[bm2.index] = 0;
+          }
+        }
+      }, 120);
+    }
   }
 
   // 待机浮动
-  this.floatPhase += dt * 1.2;
+  this.floatPhase += dt * 1.4;
   if (this.modelRoot && this.modelBaseY !== undefined) {
-    this.modelRoot.position.y = this.modelBaseY + Math.sin(this.floatPhase) * 0.008;
+    this.modelRoot.position.y = this.modelBaseY + Math.sin(this.floatPhase) * 0.012 - 0.1;
   }
   if (this.placeholder) {
-    this.placeholder.rotation.y += dt * 0.5;
+    this.placeholder.rotation.y += dt * 0.3;
   }
 };
 

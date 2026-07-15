@@ -1,0 +1,10 @@
+com\booksite\entity\Book.class
+com\booksite\config\DataInitializer.class
+com\booksite\controller\BookController.class
+com\booksite\BooksiteApplication.class
+com\booksite\config\WebMvcConfig.class
+com\booksite\service\BookService.class
+com\booksite\mapper\BookMapper.class
+com\booksite\controller\LoginController.class
+com\booksite\service\impl\BookServiceImpl.class
+com\booksite\interceptor\LoginInterceptor.class

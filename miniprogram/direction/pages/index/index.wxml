@@ -3,12 +3,13 @@
   <!-- ========== 顶部状态栏 ========== -->
   <view class="header-bar">
     <view class="header-left">
-      <view class="header-greeting">上午好</view>
-      <view class="header-scenic">{{scenicName}}</view>
+      <view class="header-greeting">{{greeting}}</view>
+      <view class="header-scenic">{{t.scenicName}}</view>
     </view>
     <view class="header-right">
-      <view class="header-weather">⛅ 26°</view>
-      <view class="header-badge">AAAAA</view>
+      <view class="avatar-voice-btn {{isPlaying ? 'playing' : ''}}" bindtap="{{isPlaying ? 'stopTts' : 'getTts'}}">
+        <text>{{isPlaying ? '⏹' : '🔊'}}</text>
+      </view>
     </view>
   </view>
 
@@ -33,103 +34,91 @@
     </view>
   </view>
 
-  <!-- ========== 快捷入口 ========== -->
-  <view class="action-bar">
-    <view class="action-item" bindtap="sendChat">
-      <view class="action-icon">💬</view>
-      <view class="action-label">智能问答</view>
-    </view>
-    <view class="action-item" bindtap="getRoute">
-      <view class="action-icon">🗺️</view>
-      <view class="action-label">路线规划</view>
-    </view>
-    <view class="action-item" bindtap="{{isPlaying ? 'stopTts' : 'getTts'}}">
-      <view class="action-icon">{{isPlaying ? '⏹' : '🔊'}}</view>
-      <view class="action-label">{{isPlaying ? '停止' : '语音播报'}}</view>
-    </view>
-    <view class="action-item" bindtap="openDashboard">
-      <view class="action-icon">👤</view>
-      <view class="action-label">我的</view>
-    </view>
-  </view>
 
   <!-- ========== 对话区域 ========== -->
   <view class="chat-section">
     <view class="chat-header">
       <text class="chat-header-icon">💬</text>
-      <text class="chat-header-title">智能导览对话</text>
+      <text class="chat-header-title">{{t.chatTitle}}</text>
       <view wx:if="{{messages.length > 0}}" class="chat-count">{{messages.length}}</view>
-      <text class="new-chat-btn" bindtap="startNewChat">＋ 新对话</text>
+      <text class="new-chat-btn" bindtap="startNewChat">{{t.newChat}}</text>
     </view>
 
     <view class="chat-card">
-      <scroll-view class="chat-scroll" scroll-y="true" wx:if="{{messages.length > 0}}">
+      <scroll-view class="chat-scroll" scroll-y="true" scroll-into-view="msg_{{messages.length - 1}}" scroll-with-animation="{{true}}">
         <block wx:for="{{messages}}" wx:key="index">
-          <view class="msg-row {{item.role === 'user' ? 'msg-row-user' : ''}}">
+          <view id="msg_{{index}}" class="msg-row {{item.role === 'user' ? 'msg-row-user' : ''}}">
             <view wx:if="{{item.role === 'assistant'}}" class="msg-avatar">🧑‍🏫</view>
-            <view class="msg-bubble {{item.role === 'user' ? 'msg-user' : 'msg-assistant'}}">{{item.content}}</view>
+            <view class="msg-area">
+              <view class="msg-bubble {{item.role === 'user' ? 'msg-user' : 'msg-assistant'}}">{{item.content}}</view>
+              <view wx:if="{{item.navSpot}}" class="nav-bar" bindtap="onNavTap" data-nav="{{item.navSpot}}">
+                <text>导航至 {{item.navSpot.name}}</text>
+              </view>
+            </view>
             <view wx:if="{{item.role === 'user'}}" class="msg-avatar msg-avatar-self">👤</view>
           </view>
         </block>
       </scroll-view>
-
-      <view class="quick-block">
-        <view class="quick-label">💡 猜你想问</view>
-        <view class="chips">
-          <text wx:for="{{suggestedQuestions}}" wx:key="*this" class="chip" data-question="{{item}}" bindtap="useSuggestedQuestion">{{item}}</text>
-        </view>
-      </view>
-
       <view wx:if="{{errorText}}" class="error-box">
         <text class="error-icon">⚠️</text>
         <text>{{errorText}}</text>
       </view>
 
-      <view class="input-row">
-        <input class="composer-input" placeholder="想问什么尽管说..." value="{{message}}" data-field="message" bindinput="onFieldChange" confirm-type="send" bindconfirm="sendChat" />
-        <button class="voice-btn {{isRecording ? 'recording' : ''}}" bindtouchstart="startRecording" bindtouchend="stopRecording">{{isRecording ? '⏺' : '🎤'}}</button>
-        <button class="send-btn" bindtap="sendChat" loading="{{loading}}">发送</button>
+      <!-- 结束对话按钮 -->
+      <view hidden="{{messages.length === 0}}" class="end-chat-row" bindtap="showRatingPopup" hover-class="end-chat-hover">
+        <text class="end-chat-btn-text">🏁 {{t.endChat || '结束对话'}}</text>
       </view>
-    </view>
-  </view>
 
-  <!-- ========== 路线推荐 ========== -->
-  <view class="route-section">
-    <view class="route-header">
-      <text class="route-header-icon">🗺️</text>
-      <text class="route-header-title">为你定制的路线</text>
-    </view>
-    <view class="route-subtitle">基于你对 <text class="hl">{{interestsText}}</text> 的兴趣</view>
+      <view class="quick-block">
+        <view class="quick-label">💡 {{t.suggestLabel}}</view>
+        <view class="chips">
+          <text wx:for="{{suggestedQuestions}}" wx:key="*this" class="chip" data-question="{{item}}" bindtap="useSuggestedQuestion">{{item}}</text>
+        </view>
+      </view>
 
-    <view class="route-list">
-      <block wx:for="{{routeResult}}" wx:key="name">
-        <view class="route-card {{index === 0 ? 'route-blue' : 'route-green'}}">
-          <view class="route-card-head">
-            <view class="route-dot {{index === 0 ? 'dot-primary' : 'dot-secondary'}}">{{index + 1}}</view>
-            <view class="route-card-title">
-              <text class="route-name">{{item.name}}</text>
-              <text class="route-time">🕐 {{item.estimated_time}}分钟</text>
-            </view>
-          </view>
-          <view class="route-stops">
-            <view wx:for="{{item.stops}}" wx:key="*this" wx:for-item="stop" class="route-stop">
-              <text class="route-stop-marker">📍</text>
-              <text>{{stop}}</text>
-            </view>
+      <view class="input-row">
+        <input class="composer-input" placeholder="{{t.chatPlaceholder}}" value="{{message}}" data-field="message" bindinput="onFieldChange" confirm-type="send" bindconfirm="sendChat" />
+        <button class="emoji-toggle-btn" bindtap="toggleEmojiPanel">😊</button>
+        <button class="voice-btn {{isRecording ? 'recording' : ''}}" bindtouchstart="startRecording" bindtouchend="stopRecording" bindtouchcancel="cancelRecording">{{isRecording ? t.recordingBtn : t.voiceBtn}}</button>
+        <button class="send-btn" bindtap="sendChat" loading="{{loading}}">{{t.sendBtn}}</button>
+      </view>
+
+      <!-- 表情面板 -->
+      <view wx:if="{{showEmojiPanel}}" class="emoji-panel">
+        <view wx:for="{{emojiCategories}}" wx:key="name" class="emoji-cat">
+          <text class="emoji-cat-name">{{item.name}}</text>
+          <view class="emoji-grid">
+            <text wx:for="{{item.emojis}}" wx:key="*this" class="emoji-item" bindtap="insertEmoji" data-emoji="{{item}}">{{item}}</text>
           </view>
         </view>
-      </block>
-    </view>
-
-    <view class="interest-block">
-      <view class="interest-title">🎯 调整兴趣偏好</view>
-      <view class="chips">
-        <text wx:for="{{interestTags}}" wx:key="*this" class="chip tag-chip">{{item}}</text>
       </view>
     </view>
-
-    <button class="route-btn" bindtap="getRoute">🗺️ 重新规划路线</button>
   </view>
 
-  <view class="bottom-safe"></view>
+  <!-- ========== 评分弹窗 ========== -->
+  <view wx:if="{{showRating}}" class="rating-overlay" bindtap="hideRatingPopup">
+    <view class="rating-modal" catchtap="noop">
+      <view class="rating-title">{{t.rateTitle || '本次对话体验如何？'}}</view>
+      <view class="rating-subtitle">{{t.rateSubtitle || '请为导游服务评分'}}</view>
+      <view class="rating-stars">
+        <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+          class="rating-star {{item <= ratingValue ? 'active' : ''}}"
+          data-value="{{item}}"
+          bindtap="selectRating">⭐</text>
+      </view>
+      <view class="rating-hint">
+        <text wx:if="{{ratingValue === 0}}">{{t.rateHint || '点击星星评分'}}</text>
+        <text wx:elif="{{ratingValue <= 2}}">{{t.rateBad || '很抱歉，我们会努力改进 😅'}}</text>
+        <text wx:elif="{{ratingValue === 3}}">{{t.rateOk || '中等，还有提升空间 💪'}}</text>
+        <text wx:elif="{{ratingValue === 4}}">{{t.rateGood || '不错，继续加油！👍'}}</text>
+        <text wx:elif="{{ratingValue === 5}}">{{t.ratePerfect || '太棒了！非常感谢！🥰'}}</text>
+      </view>
+      <view class="rating-actions">
+        <button class="rating-cancel-btn" bindtap="hideRatingPopup">{{t.cancel || '取消'}}</button>
+        <button class="rating-submit-btn {{ratingValue > 0 ? 'active' : ''}}" bindtap="submitRating">
+          {{ratingValue > 0 ? (t.submitRating || '提交评分') : (t.rateFirst || '请先评分')}}
+        </button>
+      </view>
+    </view>
+  </view>
 </view>

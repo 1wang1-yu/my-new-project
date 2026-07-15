@@ -18,4 +18,22 @@ public class ChatRequestDTO {
 
     @JsonProperty("user_id")
     private Long userId;
+
+    @JsonProperty("language")
+    private String language;
+
+    @JsonProperty("age")
+    private Integer age;
+
+    @JsonProperty("gender")
+    private String gender;
+
+    @JsonProperty("location")
+    private String location;
+
+    @JsonProperty("latitude")
+    private Double latitude;
+
+    @JsonProperty("longitude")
+    private Double longitude;
 }

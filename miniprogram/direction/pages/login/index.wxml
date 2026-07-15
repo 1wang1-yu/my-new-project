@@ -1,0 +1,28 @@
+<view class="page">
+  <view class="login-box">
+    <view class="logo">🏔️</view>
+    <view class="title">{{isLogin ? '登录' : '注册'}}</view>
+    <view class="subtitle">灵山胜境 · 智慧导览</view>
+
+    <input class="input" placeholder="用户名" value="{{username}}" bindinput="onUsernameInput" maxlength="30" />
+    <input class="input" placeholder="密码" password="{{true}}" value="{{password}}" bindinput="onPasswordInput" maxlength="30" />
+
+    <block wx:if="{{!isLogin}}">
+      <input class="input" placeholder="昵称（选填）" value="{{nickName}}" bindinput="onNickInput" maxlength="20" />
+      <view class="row">
+        <input class="input half" placeholder="年龄（选填）" type="number" value="{{ageStr}}" bindinput="onAgeInput" maxlength="3" />
+        <picker class="picker half" mode="selector" range="{{genderList}}" value="{{genderIndex}}" bindchange="onGenderChange">
+          <view class="picker-text">{{genderText}}</view>
+        </picker>
+      </view>
+    </block>
+
+    <button class="btn-primary" bindtap="onSubmit" loading="{{loading}}">
+      {{isLogin ? '登录' : '注册'}}
+    </button>
+
+    <view class="switch" bindtap="toggleMode">
+      {{isLogin ? '没有账号？去注册' : '已有账号？去登录'}}
+    </view>
+  </view>
+</view>

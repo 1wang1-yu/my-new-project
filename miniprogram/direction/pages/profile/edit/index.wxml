@@ -1,0 +1,36 @@
+<view class="page-shell">
+
+  <view class="user-card card">
+    <view class="user-avatar">👤</view>
+    <view class="user-name">{{t.userName}}</view>
+    <view class="user-sub">{{t.scenicName}} · {{t.userDesc}}</view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">📋 {{t.profileTitle}}</text>
+    </view>
+    <view class="edit-card card">
+      <view class="pe-row">
+        <text class="pe-label">{{t.profileAge}}</text>
+        <picker mode="selector" range="{{ageOptions}}" bindchange="onAgeChange">
+          <view class="pe-picker">
+            <text class="{{userProfile.age > 0 ? 'pe-value' : 'pe-placeholder'}}">{{userProfile.age > 0 ? userProfile.age + ' ' + (currentLang === 'en' ? 'years' : '岁') : t.profileAgePlaceholder}}</text>
+            <text class="pe-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+      <view class="pe-row">
+        <text class="pe-label">{{t.profileGender}}</text>
+        <view class="pe-gender-row">
+          <view wx:for="{{genderOptions}}" wx:key="value" class="gender-chip {{userProfile.gender === item.value ? 'gender-active' : ''}}" bindtap="onGenderChange" data-gender="{{item.value}}">{{item.label}}</view>
+        </view>
+      </view>
+      <view class="pe-row pe-row-last">
+        <text class="pe-label">{{t.profileLocation}}</text>
+        <input class="pe-input" placeholder="{{t.profileLocationPlaceholder}}" value="{{userProfile.location}}" bindinput="onLocationInput" maxlength="20" />
+      </view>
+    </view>
+  </view>
+
+</view>

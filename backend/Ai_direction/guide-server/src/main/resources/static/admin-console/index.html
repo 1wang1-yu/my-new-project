@@ -13,50 +13,50 @@
         <div class="brand-icon">导</div>
         <div>
           <div class="brand-title">智慧导览管理平台</div>
-          <div class="brand-sub">知识库管理 · 数字人配置 · 数据大屏 · 系统设置</div>
+          <div class="brand-sub">知识库管理 · 数字人配置 · 数据大屏 · 用户管理 · 系统设置</div>
         </div>
       </div>
       <nav class="nav">
         <a href="#knowledge">知识库管理</a>
         <a href="#avatar">数字人配置</a>
         <a href="#dashboard" class="active">数据大屏</a>
+        <a href="#users">用户管理</a>
         <a href="#system">系统设置</a>
       </nav>
     </header>
 
     <main>
-      <section id="dashboard" class="stats-grid">
-        <article class="panel stat-card">
-          <span>今日服务人次</span>
-          <strong id="serviceCount">--</strong>
-          <small class="positive">↑ 12% 较昨日</small>
-        </article>
-        <article class="panel stat-card">
-          <span>平均满意度</span>
-          <strong><span id="satisfaction">--</span><em>/5</em></strong>
-          <small class="positive">↑ 0.2 较上周</small>
-        </article>
-        <article class="panel stat-card">
-          <span>问答准确率</span>
-          <strong><span id="accuracyRate">--</span><em>%</em></strong>
-          <small>达标 &gt; 90%</small>
-        </article>
-        <article class="panel stat-card">
-          <span>平均响应时长</span>
-          <strong><span id="avgResponse">--</span><em>ms</em></strong>
-          <small class="positive">优于目标</small>
-        </article>
-      </section>
+      <!-- 数据大屏 -->
+      <section id="dashboard">
+        <div class="stats-grid">
+          <article class="panel stat-card">
+            <span>今日服务人次</span>
+            <strong id="serviceCount">--</strong>
+            <small class="positive">↑ 12% 较昨日</small>
+          </article>
+          <article class="panel stat-card">
+            <span>平均满意度</span>
+            <strong><span id="satisfaction">--</span><em>/5</em></strong>
+            <small class="positive">↑ 0.2 较上周</small>
+          </article>
+          <article class="panel stat-card">
+            <span>问答准确率</span>
+            <strong><span id="accuracyRate">--</span><em>%</em></strong>
+            <small>达标 &gt; 90%</small>
+          </article>
+          <article class="panel stat-card">
+            <span>平均响应时长</span>
+            <strong><span id="avgResponse">--</span><em>ms</em></strong>
+            <small class="positive">优于目标</small>
+          </article>
+          <article class="panel stat-card" id="userStructureCard">
+            <span>👥 用户结构特征</span>
+            <strong><span id="userStructureCount">--</span></strong>
+            <small>点击查看性别年龄分布</small>
+          </article>
+        </div>
 
-      <section class="board-grid">
-        <article class="panel chart-panel">
-          <h3>本周满意度趋势</h3>
-          <div class="bar-chart">
-            <i style="height: 72%"></i><i style="height: 84%"></i><i style="height: 76%"></i><i style="height: 81%"></i><i style="height: 88%"></i><i class="green" style="height: 92%"></i><i class="green" style="height: 90%"></i>
-          </div>
-          <div class="week-labels"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
-        </article>
-
+      <div class="board-grid">
         <article class="panel chart-panel">
           <h3>游客情感分布</h3>
           <div class="progress-item">
@@ -73,18 +73,144 @@
           </div>
         </article>
 
+        <!-- 兴趣偏好统计 -->
+        <article class="panel chart-panel">
+          <h3>🎯 用户兴趣偏好 Top 10</h3>
+          <div id="interestStats" class="stat-bar-list">
+            <div class="loading-row" style="text-align:center;color:var(--muted);padding:10px;">加载中...</div>
+          </div>
+        </article>
+
         <article class="panel list-panel">
           <h3>今日热门问题 Top 5</h3>
           <ol id="topQuestions" class="top-list"></ol>
         </article>
 
-        <article id="knowledge" class="panel list-panel">
-          <h3>知识库状态</h3>
-          <div class="knowledge-row"><span>景区历史文史资料</span><b>已索引 234篇</b></div>
-          <div class="knowledge-row"><span>常见问答对</span><b>已索引 89组</b></div>
-          <div class="knowledge-row"><span>景点讲解词</span><b>已索引 56个</b></div>
-          <div class="update-box">上次更新：2天前 · 建议检查新增景点资料</div>
-        </article>
+      <!-- 服务人次详情（点击服务人次卡片展开） -->
+      <section id="service-count-detail" class="panel sat-detail" style="display:none;margin-top:18px;">
+        <div class="sat-header">
+          <div class="sat-header-left">
+            <h3 style="margin:0;">📊 服务人次详情</h3>
+            <span class="sat-hint">点击服务人次卡片可收起</span>
+          </div>
+          <div class="sat-controls">
+            <div class="sat-toggle" id="scToggle">
+              <button class="sc-type-btn active" data-type="day">按日</button>
+              <button class="sc-type-btn" data-type="week">按周</button>
+            </div>
+            <input type="date" id="scDate" class="sat-date-input" />
+            <button id="scQueryBtn" class="sat-query-btn">查询</button>
+          </div>
+        </div>
+        <div class="sat-body">
+          <div class="sat-summary">
+            <div class="sat-stat-card">
+              <span class="sat-stat-label">当前服务人次</span>
+              <strong class="sat-stat-value" id="scCurrentCount">--</strong>
+              <span class="sat-stat-unit">次</span>
+            </div>
+            <div class="sat-stat-card">
+              <span class="sat-stat-label">上期</span>
+              <strong class="sat-stat-value" id="scPrevCount">--</strong>
+              <span class="sat-stat-unit">次</span>
+            </div>
+            <div class="sat-stat-card" id="scCompareCard">
+              <span class="sat-stat-label">较上期</span>
+              <strong class="sat-stat-value" id="scChange">--</strong>
+              <span class="sat-stat-unit" id="scChangeUnit"></span>
+            </div>
+          </div>
+          <div style="margin-top:18px;">
+            <h4 style="margin:0 0 14px 0;">趋势</h4>
+            <div style="display:flex;align-items:flex-end;height:160px;gap:4px;padding:0 4px;">
+              <div id="scTrendBars" style="display:flex;align-items:flex-end;height:160px;gap:4px;flex:1;"></div>
+            </div>
+            <div id="scTrendLabels" style="display:flex;gap:4px;margin-top:8px;"></div>
+            <div id="scTrendEmpty" class="sat-empty" style="display:none;">暂无趋势数据</div>
+          </div>
+        </div>
+        <div class="sat-loading" id="scLoading">加载中...</div>
+      </section>
+
+      <!-- 满意度详情（点击满意度卡片展开） -->
+      <section id="satisfaction-detail" class="panel sat-detail" style="display:none;margin-top:18px;">
+        <div class="sat-header">
+          <div class="sat-header-left">
+            <h3 style="margin:0;">📊 满意度详情</h3>
+            <span class="sat-hint">点击满意度卡片可收起</span>
+          </div>
+          <div class="sat-controls">
+            <div class="sat-toggle" id="satToggle">
+              <button class="sat-type-btn active" data-type="day">按日</button>
+              <button class="sat-type-btn" data-type="month">按月</button>
+              <button class="sat-type-btn" data-type="year">按年</button>
+            </div>
+            <input type="date" id="satDate" class="sat-date-input" />
+            <button id="satQueryBtn" class="sat-query-btn">查询</button>
+          </div>
+        </div>
+        <div class="sat-body">
+          <div class="sat-summary">
+            <div class="sat-stat-card">
+              <span class="sat-stat-label">当前评分</span>
+              <strong class="sat-stat-value" id="satCurrentAvg">--</strong>
+              <span class="sat-stat-unit">/5</span>
+            </div>
+            <div class="sat-stat-card">
+              <span class="sat-stat-label">评价次数</span>
+              <strong class="sat-stat-value" id="satCurrentCount">--</strong>
+              <span class="sat-stat-unit">次</span>
+            </div>
+            <div class="sat-stat-card" id="satCompareCard">
+              <span class="sat-stat-label">较上期</span>
+              <strong class="sat-stat-value" id="satChange">--</strong>
+              <span class="sat-stat-unit" id="satChangeUnit"></span>
+            </div>
+          </div>
+          <div class="sat-charts">
+            <div class="sat-dist-panel">
+              <h4>评分分布</h4>
+              <div id="satDistribution" class="sat-dist-bars"></div>
+            </div>
+            <div class="sat-trend-panel">
+              <h4>趋势</h4>
+              <div class="sat-trend-chart-area">
+                <div id="satTrendBars" class="bar-chart sat-trend-bars"></div>
+                <div id="satTrendLabels" class="week-labels sat-trend-labels"></div>
+              </div>
+              <div id="satTrendEmpty" class="sat-empty">暂无趋势数据</div>
+            </div>
+          </div>
+        </div>
+        <div class="sat-loading" id="satLoading">加载中...</div>
+      </section>
+
+      <!-- 用户结构特征详情（点击用户结构特征卡片展开） -->
+      <section id="user-structure-detail" class="panel sat-detail" style="display:none;margin-top:18px;">
+        <div class="sat-header">
+          <div class="sat-header-left">
+            <h3 style="margin:0;">👥 用户结构特征</h3>
+            <span class="sat-hint">点击用户结构特征卡片可收起</span>
+          </div>
+        </div>
+        <div class="sat-body">
+          <div class="sat-charts" style="grid-template-columns:1fr 1fr;">
+            <div class="sat-dist-panel">
+              <h4>性别分布</h4>
+              <div id="usGenderStats" class="stat-bar-list"></div>
+            </div>
+            <div class="sat-dist-panel">
+              <h4>年龄分布</h4>
+              <div id="usAgeStats" class="stat-bar-list"></div>
+            </div>
+          </div>
+          <div class="sat-dist-panel">
+            <h4>用户总数</h4>
+            <div style="text-align:center;font-size:36px;font-weight:700;padding:20px 0;" id="usTotalCount">--</div>
+          </div>
+        </div>
+      </section>
+
       </section>
 
       <section class="bottom-grid">
@@ -106,16 +232,85 @@
           </div>
           <div id="sentimentBox" class="report-box"></div>
         </article>
+      </section>
 
-        <article class="panel" id="avatar">
-          <h3>知识库上传</h3>
+      <!-- 数字人形象配置（分步选择） -->
+      <section id="avatar" class="section" style="display:none;margin-top:18px;">
+        <article class="panel" style="padding:26px;">
+          <h3 style="margin:0 0 6px 0;">🎨 数字人形象搭配</h3>
+          <p style="margin-top:0;color:var(--muted);">依次选择头部、发型、服饰，搭配出你的数字人造型</p>
+
+          <!-- 分步选择器 -->
+          <div id="partSelector" class="part-selector">
+            <div class="avatar-empty">加载中...</div>
+          </div>
+
+          <!-- 搭配预览结果 -->
+          <div id="comboResult" class="combo-result" style="display:none;">
+            <div class="combo-result-divider"></div>
+            <div class="combo-result-body">
+              <div class="combo-result-icon">🧑</div>
+              <div class="combo-result-info">
+                <div class="combo-result-name" id="comboResultName">--</div>
+                <div class="combo-result-file" id="comboResultFile">--</div>
+              </div>
+              <button class="combo-apply-btn" onclick="applyCombo(previewVrmFile)">✅ 确认应用</button>
+            </div>
+          </div>
+
+          <div id="avatarMsg" class="report-box" style="margin-top:14px;"></div>
+        </article>
+      </section>
+      <!-- 用户管理 -->
+      <section id="users" class="users-section" style="display:none;margin-top:18px;">
+        <article class="panel" style="padding:26px;">
+          <h3 style="margin:0 0 16px 0;font-size:18px;">👥 用户列表</h3>
+          <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+            <input id="userKeyword" placeholder="🔍 搜索 ID / 用户名 / 昵称" style="flex:1;min-width:200px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.04);color:#fff;font-size:14px;" />
+            <select id="userSortBy" style="padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.04);color:#fff;font-size:14px;">
+              <option value="id">排序:ID</option>
+              <option value="age">排序:年龄</option>
+              <option value="visit_count">排序:访问次数</option>
+              <option value="create_time">排序:注册时间</option>
+            </select>
+            <select id="userSortOrder" style="padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.04);color:#fff;font-size:14px;">
+              <option value="desc">↓ 降序</option>
+              <option value="asc">↑ 升序</option>
+            </select>
+            <button id="userSearchBtn" style="padding:10px 24px;border-radius:10px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-size:14px;">搜索</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="user-table">
+              <thead>
+                <tr><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">ID</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">用户名</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">昵称</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">年龄</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">性别</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">访问次数</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">注册时间</th><th style="text-align:left;padding:12px 10px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500;">操作</th></tr>
+              </thead>
+              <tbody id="userTableBody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- 知识库管理 -->
+      <section id="knowledge" class="users-section" style="display:none;margin-top:18px;">
+        <article class="panel" style="padding:26px;">
+          <h3 style="margin:0 0 16px 0;font-size:18px;">📚 知识库状态</h3>
+          <div class="knowledge-row"><span>📄 文档总数</span><b id="kbTotal">加载中...</b></div>
+          <div id="kbCategories"></div>
+          <div class="update-box" id="kbUpdateInfo">加载中...</div>
+
+          <h3 style="margin-top:24px;">📤 上传知识库文件</h3>
           <div class="form-column">
-            <input id="uploadTitle" value="景区常见问题文档" />
-            <input id="uploadCategory" value="faq" />
-            <input id="knowledgeFile" type="file" />
+            <input id="uploadTitle" placeholder="文档标题" value="景区常见问题" />
+            <input id="uploadCategory" placeholder="分类（如: scenic/faq/guide）" value="faq" />
+            <input id="knowledgeFile" type="file" accept=".txt" />
             <button id="uploadBtn">上传并入库</button>
           </div>
-          <div id="uploadResult" class="report-box"></div>
+          <div id="uploadResult" class="report-box" style="display:none;"></div>
+
+          <h3 style="margin-top:24px;">📋 最近上传</h3>
+          <div id="kbRecentList" class="kb-list"></div>
         </article>
       </section>
     </main>

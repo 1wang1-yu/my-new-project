@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.booksite.mapper.BookMapper">
+
+    <resultMap id="bookResult" type="com.booksite.entity.Book">
+        <id property="id" column="id"/>
+        <result property="bookName" column="bookName"/>
+        <result property="author" column="author"/>
+        <result property="publish" column="publish"/>
+        <result property="price" column="price"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="bookResult">
+        SELECT id, bookName, author, publish, price FROM books
+    </select>
+
+    <select id="findById" parameterType="int" resultMap="bookResult">
+        SELECT id, bookName, author, publish, price FROM books WHERE id = #{id}
+    </select>
+
+    <update id="update" parameterType="com.booksite.entity.Book">
+        UPDATE books
+        SET bookName = #{bookName},
+            author   = #{author},
+            publish  = #{publish},
+            price    = #{price}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insert" parameterType="com.booksite.entity.Book">
+        INSERT INTO books (bookName, author, publish, price)
+        VALUES (#{bookName}, #{author}, #{publish}, #{price})
+    </insert>
+
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM books WHERE id = #{id}
+    </delete>
+
+</mapper>

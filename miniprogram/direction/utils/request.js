@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = 'http://10.204.97.140:8081'
+const DEFAULT_BASE_URL = 'http://192.168.3.42:8081'
 
 function normalizeError(message) {
   if (!message) {
@@ -14,8 +14,9 @@ function request({ url, method = 'GET', data, header = {} }) {
   const app = getApp()
   const baseUrl = (app && app.globalData && app.globalData.baseUrl) || DEFAULT_BASE_URL
 
-  return new Promise((resolve, reject) => {
-    wx.request({
+  var requestTask = null
+  var promise = new Promise((resolve, reject) => {
+    requestTask = wx.request({
       url: `${baseUrl}${url}`,
       method,
       data,
@@ -38,6 +39,16 @@ function request({ url, method = 'GET', data, header = {} }) {
       },
     })
   })
+
+  // 返回同时支持 then/catch 和 abort 的对象
+  return {
+    then: promise.then.bind(promise),
+    catch: promise.catch.bind(promise),
+    finally: promise.finally.bind(promise),
+    abort: function () {
+      if (requestTask) requestTask.abort()
+    },
+  }
 }
 
 function upload({ url, filePath, name = 'file', formData = {} }) {

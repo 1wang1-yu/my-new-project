@@ -6,12 +6,15 @@ App({
     logs.unshift(Date.now())
     wx.setStorageSync('logs', logs)
 
-    // 清除旧的 baseUrl 缓存，强制使用最新配置
-    wx.removeStorageSync('guide_base_url')
+    // 从缓存读取 baseUrl，没有则用默认值
+    var savedUrl = wx.getStorageSync('guide_base_url')
+    if (savedUrl) {
+      this.globalData.baseUrl = savedUrl
+    }
   },
   globalData: {
     userInfo: null,
-    baseUrl: DEFAULT_BASE_URL,
+    baseUrl: 'http://192.168.3.42:8081',
     scenicName: '灵山胜境',
     avatarName: '小导',
   }

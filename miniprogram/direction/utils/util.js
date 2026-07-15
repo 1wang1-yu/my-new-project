@@ -29,9 +29,16 @@ function splitInterests(text) {
     .filter(Boolean)
 }
 
+function getHistoryKey() {
+  var userId = '0'
+  try { userId = wx.getStorageSync('guide_user_id') || '0' } catch (e) {}
+  return 'guide_chat_history_' + userId
+}
+
 module.exports = {
   formatTime,
   saveBaseUrl,
   loadBaseUrl,
   splitInterests,
+  getHistoryKey,
 }

@@ -1,7 +1,9 @@
 package com.guide.service;
 
+import com.guide.client.EmbeddingClient;
 import com.guide.client.VectorDbClient;
 import com.guide.mapper.KnowledgeDocMapper;
+import org.springframework.data.domain.PageRequest;
 import com.guide.entity.KnowledgeDoc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -21,6 +24,7 @@ public class KnowledgeService {
 
     private final KnowledgeDocMapper knowledgeDocMapper;
     private final VectorDbClient vectorDbClient;
+    private final EmbeddingClient embeddingClient;
 
     @Transactional(readOnly = true)
     public List<String> retrieveContext(String userQuery, List<List<Float>> queryEmbedding, int topK) {
@@ -85,11 +89,60 @@ public class KnowledgeService {
         LocalDateTime now = LocalDateTime.now();
         doc.setCreateTime(now);
         doc.setUpdateTime(now);
-        return knowledgeDocMapper.save(doc);
+        KnowledgeDoc saved = knowledgeDocMapper.save(doc);
+        // 保存后自动索引到 ChromaDB
+        try {
+            indexDocument(saved);
+        } catch (Exception e) {
+            log.error("文档索引失败: id={}, {}", saved.getId(), e.getMessage());
+        }
+        return saved;
+    }
+
+    /** 将文档索引到 ChromaDB（生成 embedding → 写入向量库） */
+    public void indexDocument(KnowledgeDoc doc) {
+        if (doc == null || doc.getContent() == null || doc.getContent().isBlank()) {
+            log.warn("文档内容为空，跳过索引: id={}", doc != null ? doc.getId() : null);
+            return;
+        }
+        try {
+            List<Float> embedding = embeddingClient.embed(doc.getContent());
+            if (embedding.isEmpty()) {
+                log.warn("文档 embedding 为空，跳过索引: id={}", doc.getId());
+                return;
+            }
+
+            String docId = "knowledge_" + doc.getId();
+            List<String> ids = List.of(docId);
+            List<List<Float>> embeddings = List.of(embedding);
+            List<String> contents = List.of(doc.getTitle() + "\n" + doc.getContent());
+            List<Map<String, String>> metadatas = List.of(Map.of(
+                    "title", doc.getTitle() != null ? doc.getTitle() : "",
+                    "category", doc.getCategory() != null ? doc.getCategory() : "",
+                    "doc_id", String.valueOf(doc.getId())
+            ));
+            vectorDbClient.addDocuments(null, ids, embeddings, contents, metadatas);
+
+            doc.setIndexStatus(1);
+            doc.setChunkCount(1);
+            doc.setUpdateTime(LocalDateTime.now());
+            knowledgeDocMapper.save(doc);
+            log.info("文档索引成功: id={}, title={}", doc.getId(), doc.getTitle());
+        } catch (Exception e) {
+            log.error("文档索引异常: id={}, {}", doc.getId(), e.getMessage());
+            doc.setIndexStatus(2);
+            doc.setUpdateTime(LocalDateTime.now());
+            knowledgeDocMapper.save(doc);
+        }
     }
 
     @Transactional(readOnly = true)
     public long countDocuments() {
         return knowledgeDocMapper.count();
+    }
+
+    @Transactional(readOnly = true)
+    public List<KnowledgeDoc> getRecentDocuments(int n) {
+        return knowledgeDocMapper.findTopN(PageRequest.of(0, n));
     }
 }

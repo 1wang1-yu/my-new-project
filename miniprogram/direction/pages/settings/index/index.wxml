@@ -1,0 +1,55 @@
+<view class="page-shell">
+  <!-- 个人信息 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">👤 个人信息</text>
+    </view>
+
+    <!-- 头像 -->
+    <view class="avatar-row" bindtap="chooseAvatar">
+      <view class="user-avatar" wx:if="{{!avatarUrl}}" style="background:#E8F2F0;display:flex;align-items:center;justify-content:center;font-size:48rpx;">{{nickName ? nickName[0] : '👤'}}</view>
+      <image class="user-avatar" wx:else src="{{avatarUrl}}" mode="aspectFill" />
+      <view class="avatar-info">
+        <text class="avatar-name">{{nickName || '点击设置昵称'}}</text>
+        <text class="avatar-hint">点击更换头像</text>
+      </view>
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">昵称</text>
+      <input class="form-input" value="{{nickName}}" bindinput="onNickInput" placeholder="你的昵称" />
+    </view>
+    <view class="form-row">
+      <text class="form-label">年龄</text>
+      <picker mode="selector" range="{{ageOptions}}" value="{{ageIndex}}" bindchange="onAgeChange">
+        <view class="form-picker">{{ageText || '选择年龄'}}</view>
+      </picker>
+    </view>
+    <view class="form-row">
+      <text class="form-label">性别</text>
+      <view class="gender-group">
+        <view class="gender-btn {{gender === 'male' ? 'active' : ''}}" bindtap="setGender" data-gender="male">男</view>
+        <view class="gender-btn {{gender === 'female' ? 'active' : ''}}" bindtap="setGender" data-gender="female">女</view>
+        <view class="gender-btn {{gender === 'other' ? 'active' : ''}}" bindtap="setGender" data-gender="other">其他</view>
+      </view>
+    </view>
+
+    <button class="save-btn" bindtap="saveProfile" loading="{{saving}}">💾 保存更改</button>
+  </view>
+
+  <!-- 语言切换 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">🌐 语言</text>
+    </view>
+    <view class="lang-row">
+      <view wx:for="{{langList}}" wx:key="code" class="lang-chip {{currentLang === item.code ? 'lang-active' : ''}}" bindtap="selectLang" data-lang="{{item.code}}">{{item.label}}</view>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <view class="section">
+    <button class="logout-btn" bindtap="onLogout">🚪 退出登录</button>
+  </view>
+
+</view>

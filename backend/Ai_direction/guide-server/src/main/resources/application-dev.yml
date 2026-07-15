@@ -5,40 +5,43 @@ spring:
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=smart_guide_db;encrypt=false;trustServerCertificate=true
     username: sa
-    password: your-db-password
+    password: Root@123456
+  jpa:
+    hibernate:
+      ddl-auto: update
   ai:
     openai:
-      api-key: your-dashscope-api-key
+      api-key: sk-ws-H.EDLDEMX.baLJ.MEYCIQD2zGUtpg1nBLn7wu7rrcPjvHxs2Iz9P_an6s_OD3BzbQIhAPIkcGnhtm4Gz0Q3oJi3SHktaf6F1fEPIu4dBFjLFmqC
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
         options:
-          model: qwen3.5-flash
+          model: qwen-turbo
 
 guide:
   whisper:
     base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    api-key: your-dashscope-api-key
+    api-key: sk-ws-H.EDLDEMX.baLJ.MEYCIQD2zGUtpg1nBLn7wu7rrcPjvHxs2Iz9P_an6s_OD3BzbQIhAPIkcGnhtm4Gz0Q3oJi3SHktaf6F1fEPIu4dBFjLFmqC
     transcribe-path: /audio/transcriptions
     model: whisper-1
   chroma:
     base-url: http://localhost:8000
-    default-collection: travel_kb
+    default-collection: travel_kb_v2
   tts:
     base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    api-key: your-dashscope-api-key
+    api-key: sk-ws-H.EDLDEMX.baLJ.MEYCIQD2zGUtpg1nBLn7wu7rrcPjvHxs2Iz9P_an6s_OD3BzbQIhAPIkcGnhtm4Gz0Q3oJi3SHktaf6F1fEPIu4dBFjLFmqC
   tencent-cloud:
-    secret-id: your-tencent-secret-id
-    secret-key: your-tencent-secret-key
+    secret-id: AKIDHRVbXGNVggUDk6FCxVq5KRM5uhK6wb5O
+    secret-key: 9DBE9A0fKsI7pV3RegVCi3CFvT7av64s
     region: ap-guangzhou
     tts-endpoint: tts.tencentcloudapi.com
-    virtualman-key: "your-virtualman-key"
-    app-key: "your-app-key"
-    access-token: "your-access-token"
+    virtualman-key: "56b02f28ac1d4f5c9a63b4775d1a478e"
+    app-key: "b61436ba884f4a81b68ccd106bbf413b"
+    access-token: "ab6318cef140423e8db81b0de9d12f96"
 db:
   url: jdbc:sqlserver://localhost:1433;databaseName=smart_guide_db;encrypt=false;trustServerCertificate=true
   port: 1433
   host: localhost
   username: sa
   name: smart_guide_db
-  password: your-db-password
+  password: 123456
   driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver

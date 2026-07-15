@@ -1,0 +1,46 @@
+<view class="page-shell">
+
+  <!-- 打卡进度条 -->
+  <view class="summary-card card">
+    <view class="summary-row">
+      <text class="summary-label">{{t.checkinTotal}}</text>
+      <text class="summary-num">{{checkinSummary.checkedIn || 0}}/{{checkinSummary.totalSpots || 0}}</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{checkinPercent}}"></view>
+    </view>
+  </view>
+
+  <!-- GPS 刷新 -->
+  <view class="gps-bar">
+    <text wx:if="{{gpsLoading}}" class="gps-text">{{t.checkinGpsLoading}}</text>
+    <text wx:elif="{{gpsError}}" class="gps-text gps-err">{{gpsError}}</text>
+    <text wx:else class="gps-text">📍 {{gpsLat.toFixed(4)}}, {{gpsLng.toFixed(4)}}</text>
+    <button class="refresh-btn" bindtap="refreshCheckIn" loading="{{gpsLoading}}">{{t.checkinRefresh}}</button>
+  </view>
+
+  <!-- 景点照片卡片网格 -->
+  <view wx:if="{{spotList.length > 0}}" class="photo-grid">
+    <view wx:for="{{spotList}}" wx:key="id" class="photo-card {{item.checkedIn ? 'card-lit' : 'card-dim'}}">
+      <!-- 照片区域 -->
+      <view class="photo-box" style="background: {{item.image ? '' : item.gradient}};">
+        <image wx:if="{{item.image}}" class="photo-img" src="{{item.image}}" mode="aspectFill" />
+        <text wx:else class="photo-emoji">{{item.emoji}}</text>
+        <!-- 未打卡：灰色遮罩 + 锁 -->
+        <view wx:if="{{!item.checkedIn}}" class="photo-mask">
+          <text class="mask-lock">🔒</text>
+        </view>
+        <!-- 已打卡：点亮 + 打勾 -->
+        <view wx:if="{{item.checkedIn}}" class="photo-badge">✅</view>
+      </view>
+      <!-- 信息 -->
+      <view class="photo-info">
+        <text class="photo-name">{{item.name}}</text>
+        <text class="photo-cat">{{item.category}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{!gpsLoading}}" class="empty">加载中...</view>
+
+</view>

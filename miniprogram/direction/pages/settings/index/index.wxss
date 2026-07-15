@@ -1,0 +1,63 @@
+.page-shell { padding: 24rpx 28rpx; min-height: 100vh; background: #F2F4F3; }
+
+.section {
+  background: #fff; border-radius: 20rpx; padding: 24rpx; margin-bottom: 16rpx;
+}
+.section-header { margin-bottom: 16rpx; }
+.section-title { font-size: 28rpx; font-weight: 600; color: #1a1a2e; }
+
+/* 头像 */
+.avatar-row {
+  display: flex; align-items: center; gap: 20rpx;
+  padding: 16rpx; margin-bottom: 16rpx;
+  background: #f8f9f8; border-radius: 16rpx;
+}
+.user-avatar {
+  width: 100rpx; height: 100rpx; border-radius: 50%;
+  background: #e0e0e0; flex-shrink: 0;
+}
+.avatar-info { flex: 1; }
+.avatar-name { font-size: 28rpx; font-weight: 600; color: #1a1a2e; display: block; }
+.avatar-hint { font-size: 22rpx; color: #999; margin-top: 4rpx; display: block; }
+
+/* 表单项 */
+.form-row {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 14rpx 0; border-bottom: 1rpx solid #f0f0f0;
+}
+.form-label { width: 80rpx; font-size: 26rpx; color: #666; flex-shrink: 0; }
+.form-input { flex: 1; font-size: 26rpx; color: #333; padding: 8rpx 0; }
+.form-picker { flex: 1; font-size: 26rpx; color: #333; padding: 8rpx 0; }
+
+.gender-group { display: flex; gap: 12rpx; }
+.gender-btn {
+  padding: 8rpx 24rpx; border-radius: 999rpx; font-size: 24rpx;
+  background: #f0f0f0; color: #999; border: 2rpx solid transparent;
+}
+.gender-btn.active { background: #E8F2F0; color: #3D8B7E; border-color: #3D8B7E; }
+
+/* 保存按钮 */
+.save-btn {
+  width: 100%; height: 80rpx; margin-top: 20rpx;
+  background: linear-gradient(135deg, #3D8B7E, #2D6B5E);
+  color: #fff; border-radius: 16rpx; font-size: 28rpx; font-weight: 600;
+  line-height: 80rpx;
+}
+.save-btn::after { border: none; }
+
+/* 语言 */
+.lang-row { display: flex; gap: 12rpx; }
+.lang-chip {
+  padding: 12rpx 32rpx; border-radius: 999rpx; font-size: 26rpx;
+  background: #f0f0f0; color: #999;
+}
+.lang-chip.lang-active { background: #3D8B7E; color: #fff; font-weight: 600; }
+
+/* 退出 */
+.logout-btn {
+  width: 100%; height: 80rpx;
+  background: #fff; color: #d94a3a; border: 2rpx solid #f0f0f0;
+  border-radius: 16rpx; font-size: 28rpx; line-height: 80rpx;
+}
+.logout-btn::after { border: none; }
+.logout-btn:active { background: #fff5f5; }

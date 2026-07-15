@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>用户管理 - 智慧导览管理平台</title>
+  <link rel="stylesheet" href="/admin-console/styles.css" />
+  <style>
+    .users-page { max-width: 1480px; margin: 0 auto; padding: 22px; }
+    .users-page .topbar { margin-bottom: 22px; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .users-page .panel { padding: 26px; }
+    .users-page h3 { margin: 0 0 16px 0; font-size: 18px; }
+    .stat-bar-item { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 14px; }
+    .stat-bar-item .label { width: 110px; flex-shrink: 0; color: var(--muted); }
+    .stat-bar-item .value { width: 100px; flex-shrink: 0; text-align: right; }
+    .stat-bar { flex: 1; height: 22px; border-radius: 999px; background: #343434; overflow: hidden; }
+    .stat-bar b { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2d4e82, #6da5ff); transition: width 0.5s ease; }
+    .stat-total { margin-top: 16px; text-align: center; color: var(--muted); font-size: 14px; }
+    .user-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; table-layout: fixed; }
+    .user-table th { text-align: left; padding: 12px 8px; color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 500; white-space: nowrap; }
+    .user-table td { padding: 14px 8px; border-bottom: 1px solid var(--line); word-break: break-all; }
+    .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 6%; }
+    .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 12%; }
+    .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 12%; }
+    .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 8%; text-align: center; }
+    .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 8%; text-align: center; }
+    .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 10%; text-align: center; }
+    .user-table th:nth-child(7), .user-table td:nth-child(7) { width: 14%; text-align: center; }
+    .user-table th:nth-child(8), .user-table td:nth-child(8) { width: 10%; text-align: center; }
+    .loading-row { text-align: center; color: var(--muted); padding: 30px !important; }
+    .btn-delete { padding: 6px 14px; background: #6a2a2a; border: 1px solid #8a3a3a; font-size: 13px; cursor: pointer; border-radius: 8px; color: #f0b0b0; white-space: nowrap; }
+    .btn-delete:hover { background: #8a3030; }
+    .btn-back { padding: 8px 20px; background: #2f5d97; border: none; color: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
+    .btn-back:hover { background: #3a6db0; }
+    .error-msg { color: #d94a3a; text-align: center; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="users-page">
+    <div class="topbar panel" style="display:flex;justify-content:space-between;align-items:center;padding:18px 26px;">
+      <div class="brand" style="display:flex;align-items:center;gap:12px;">
+        <div class="brand-icon" style="width:36px;height:36px;border-radius:10px;background:#284d88;display:grid;place-items:center;font-weight:700;">导</div>
+        <div>
+          <div style="font-size:22px;font-weight:700;">用户管理</div>
+          <div style="color:var(--muted);font-size:13px;">用户信息 · 数据统计 · 账号管理</div>
+        </div>
+      </div>
+      <div>
+        <a href="/admin-console/" class="btn-back">← 返回管理后台</a>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="panel">
+        <h3>📊 性别分布</h3>
+        <div id="genderStats"><div class="loading-row">加载中...</div></div>
+      </div>
+      <div class="panel">
+        <h3>📊 年龄分布</h3>
+        <div id="ageStats"><div class="loading-row">加载中...</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>👥 用户列表</h3>
+      <div style="overflow-x:auto;">
+        <table class="user-table">
+          <thead>
+            <tr><th>ID</th><th>用户名</th><th>昵称</th><th>年龄</th><th>性别</th><th>访问次数</th><th>注册时间</th><th>操作</th></tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr><td colspan="8" class="loading-row">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var baseUrl = window.location.origin
+
+    function $(id) { return document.getElementById(id) }
+
+    async function request(url, opts) {
+      var response = await fetch(baseUrl + url, opts || {})
+      var result = await response.json()
+      if (!response.ok || result.code !== 0) throw new Error(result.message || '请求失败')
+      return result.data
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div')
+      div.textContent = str || ''
+      return div.innerHTML
+    }
+
+    async function loadData() {
+      try {
+        var [stats, users] = await Promise.all([
+          request('/api/v1/user/admin/stats'),
+          request('/api/v1/user/admin/list')
+        ])
+        renderStats(stats)
+        renderUsers(users)
+      } catch (err) {
+        $('genderStats').innerHTML = '<div class="error-msg">加载失败: ' + err.message + '</div>'
+        $('ageStats').innerHTML = '<div class="error-msg">加载失败</div>'
+        $('userTableBody').innerHTML = '<tr><td colspan="8" class="loading-row">加载失败: ' + err.message + '</td></tr>'
+      }
+    }
+
+    function renderStats(stats) {
+      var g = stats.gender || {}
+      $('genderStats').innerHTML =
+        '<div class="stat-bar-item"><span class="label">🧑 男</span><div class="stat-bar"><b style="width:' + g.male_percent + '%"></b></div><span class="value">' + g.male_percent + '% (' + g.male + '人)</span></div>' +
+        '<div class="stat-bar-item"><span class="label">👩 女</span><div class="stat-bar"><b style="width:' + g.female_percent + '%"></b></div><span class="value">' + g.female_percent + '% (' + g.female + '人)</span></div>' +
+        '<div class="stat-bar-item"><span class="label">❓ 未知</span><div class="stat-bar"><b style="width:' + g.unknown_percent + '%"></b></div><span class="value">' + g.unknown_percent + '% (' + g.unknown + '人)</span></div>' +
+        '<div class="stat-total">共 ' + stats.total + ' 位用户</div>'
+
+      var a = stats.age || {}
+      $('ageStats').innerHTML =
+        '<div class="stat-bar-item"><span class="label">🔞 18岁以下</span><div class="stat-bar"><b style="width:' + a.under_18_percent + '%"></b></div><span class="value">' + a.under_18_percent + '% (' + a.under_18 + '人)</span></div>' +
+        '<div class="stat-bar-item"><span class="label">🧑 18-30岁</span><div class="stat-bar"><b style="width:' + a['18_30_percent'] + '%"></b></div><span class="value">' + a['18_30_percent'] + '% (' + a['18_30'] + '人)</span></div>' +
+        '<div class="stat-bar-item"><span class="label">👨 31-50岁</span><div class="stat-bar"><b style="width:' + a['31_50_percent'] + '%"></b></div><span class="value">' + a['31_50_percent'] + '% (' + a['31_50'] + '人)</span></div>' +
+        '<div class="stat-bar-item"><span class="label">👴 50岁以上</span><div class="stat-bar"><b style="width:' + a.over_50_percent + '%"></b></div><span class="value">' + a.over_50_percent + '% (' + a.over_50 + '人)</span></div>' +
+        '<div class="stat-bar-item"><span class="label">❓ 未知</span><div class="stat-bar"><b style="width:' + a.unknown_percent + '%"></b></div><span class="value">' + a.unknown_percent + '% (' + a.unknown + '人)</span></div>'
+    }
+
+    function formatGender(val) {
+      if (val === 'male' || val === '男' || val === 1 || val === '1') return '男'
+      if (val === 'female' || val === '女' || val === 2 || val === '2') return '女'
+      return val || '--'
+    }
+
+    function formatTime(val) {
+      if (!val) return '--'
+      try { return new Date(val).toLocaleDateString('zh-CN') } catch(e) { return '--' }
+    }
+
+    function renderUsers(users) {
+      var tbody = $('userTableBody')
+      if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">暂无用户数据</td></tr>'
+        return
+      }
+      tbody.innerHTML = users.map(function (u) {
+        return '<tr>' +
+          '<td style="text-align:center;">' + (u.id || '--') + '</td>' +
+          '<td>' + escapeHtml(u.username || '') + '</td>' +
+          '<td>' + escapeHtml(u.nick_name || '--') + '</td>' +
+          '<td style="text-align:center;">' + (u.age || '--') + '</td>' +
+          '<td style="text-align:center;">' + formatGender(u.gender) + '</td>' +
+          '<td style="text-align:center;">' + (u.visit_count != null ? u.visit_count : '0') + '</td>' +
+          '<td style="text-align:center;">' + formatTime(u.create_time) + '</td>' +
+          '<td style="text-align:center;"><button class="btn-delete" onclick="deleteUser(' + u.id + ')">删除</button></td>' +
+          '</tr>'
+      }).join('')
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('确定要删除用户 ID=' + userId + ' 吗？')) return
+      try {
+        await request('/api/v1/user/admin/delete?userId=' + userId, { method: 'DELETE' })
+        loadData()
+      } catch (err) {
+        alert('删除失败: ' + err.message)
+      }
+    }
+
+    loadData()
+  </script>
+</body>
+</html>
